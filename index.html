@@ -215,8 +215,8 @@
   .card-tools{position:absolute;top:11px;right:11px;display:flex;gap:6px;align-items:center;z-index:2}
   .fav-btn{font-size:17px;line-height:1;color:#CBD0E0;cursor:pointer;user-select:none;transition:.12s}
   .fav-btn:hover{color:#F5B301} .fav-btn.on{color:#F5B301}
-  .cmp-btn{font-size:11px;font-weight:700;color:var(--muted);border:1px solid var(--line);
-    border-radius:7px;padding:3px 8px;cursor:pointer;background:#fff;transition:.12s}
+  .cmp-btn{font-size:13px;font-weight:800;color:var(--muted);border:1.5px solid var(--line);
+    border-radius:8px;padding:5px 11px;cursor:pointer;background:#fff;transition:.12s;white-space:nowrap}
   .cmp-btn:hover{border-color:var(--red);color:var(--red)}
   .cmp-btn.on{background:var(--red);color:#fff;border-color:var(--red)}
   /* view tabs */
@@ -322,51 +322,21 @@
 <div id="tip"></div>
 <script>
 
-/* ── 외부 data.json fetch ── */
-let DB = {riders:[],tables:{},categories:[],synonyms:{},codenames:{},meta:{}};
+let DB={riders:[],tables:{},categories:[],synonyms:{},codenames:{},meta:{}};
 (function(){
-  const overlay=document.createElement('div');
-  overlay.id='loadov';
-  overlay.style.cssText='position:fixed;inset:0;background:#4338CA;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;color:#fff;font-family:sans-serif;gap:16px';
-  overlay.innerHTML='<div style="font-size:28px;font-weight:800;letter-spacing:-1px">메리츠화재 특별약관 검색</div>'
+  const ov=document.createElement('div');ov.id='loadov';
+  ov.style.cssText='position:fixed;inset:0;background:#4338CA;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;color:#fff;font-family:sans-serif;gap:16px';
+  ov.innerHTML='<div style="font-size:28px;font-weight:800;letter-spacing:-1px">메리츠화재 특별약관 검색</div>'
     +'<div id="ldmsg" style="font-size:15px;opacity:.8">약관 데이터 불러오는 중…</div>'
     +'<div style="width:260px;height:6px;background:rgba(255,255,255,.25);border-radius:4px;overflow:hidden">'
     +'<div id="ldbar" style="height:100%;width:0%;background:#F59E0B;border-radius:4px;transition:width .4s"></div></div>';
-  document.body.appendChild(overlay);
-  const bar=document.getElementById('ldbar'), msg=document.getElementById('ldmsg');
-
-  const base = (()=>{
-    const s = document.currentScript || [...document.querySelectorAll('script')].slice(-1)[0];
-    const src = (s && s.src) ? s.src : location.href;
-    return src.replace(/\/[^\/]*$/, '/');
-  })();
-
+  document.body.appendChild(ov);
+  const bar=document.getElementById('ldbar'),msg=document.getElementById('ldmsg');
+  const base=(()=>{const s=document.currentScript||[...document.querySelectorAll('script')].slice(-1)[0];const src=(s&&s.src)?s.src:location.href;return src.replace(/\/[^\/]*/,'/')+'';})();
   fetch(base+'data.json')
-    .then(r=>{
-      if(!r.ok) throw new Error('HTTP '+r.status);
-      const total=+r.headers.get('content-length')||0;
-      const reader=r.body.getReader(); let received=0; const chunks=[];
-      const pump=()=>reader.read().then(({done,value})=>{
-        if(done){
-          bar.style.width='100%'; msg.textContent='화면 구성 중…';
-          const blob=new Blob(chunks); return blob.text();
-        }
-        chunks.push(value); received+=value.length;
-        if(total) bar.style.width=Math.round(received/total*90)+'%';
-        return pump();
-      });
-      return pump();
-    })
-    .then(text=>{
-      const parsed=JSON.parse(text);
-      Object.assign(DB, parsed);
-      overlay.remove();
-      init();
-    })
-    .catch(e=>{
-      msg.textContent='로드 실패: '+e.message;
-      bar.style.background='#ef4444';
-    });
+    .then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);const total=+r.headers.get('content-length')||0;const reader=r.body.getReader();let received=0;const chunks=[];const pump=()=>reader.read().then(({done,value})=>{if(done){bar.style.width='100%';msg.textContent='화면 구성 중…';return new Blob(chunks).text();}chunks.push(value);received+=value.length;if(total)bar.style.width=Math.round(received/total*90)+'%';return pump();});return pump();})
+    .then(text=>{Object.assign(DB,JSON.parse(text));ov.remove();init();})
+    .catch(e=>{msg.textContent='로드 실패: '+e.message;bar.style.background='#ef4444';});
 })();
 
 let CATMAP = {};
@@ -575,7 +545,7 @@ function render(){
       const favOn=favs.indexOf(r.id)>=0?' on':'';
       const cmpOn=compareSet.indexOf(r.id)>=0?' on':'';
       html+=`<button class="card" data-id="${r.id}"><span class="edge" style="background:${col}"></span>`+
-            `<span class="card-tools"><span class="cmp-btn${cmpOn}" data-cmp="${r.id}" title="비교 담기">비교</span>`+
+            `<span class="card-tools"><span class="cmp-btn${cmpOn}" data-cmp="${r.id}" title="비교 담기">특약비교</span>`+
             `<span class="fav-btn${favOn}" data-fav="${r.id}" title="즐겨찾기">★</span></span>`+
             `<div class="pname">${hl(r.n)}</div><div class="row2">${badge}</div>${chips}</button>`;
     });
@@ -750,19 +720,15 @@ function buildCats(){
 }
 function init(){
   CATMAP={}; DB.categories.forEach(c=>CATMAP[c.id]=c);
-  SYN=DB.synonyms||{};
-  CN=DB.codenames||{};
-  // 초성 precompute
+  SYN=DB.synonyms||{}; CN=DB.codenames||{};
   DB.riders.forEach(r=>{r._cho=toCho(r.n);});
-  // SUG index 재빌드
   SUG.length=0;
-  (function(){ const seen=new Set();
+  (function(){const seen=new Set();
     DB.riders.forEach(r=>{const k='특약'+r.n;if(!seen.has(k)){seen.add(k);SUG.push({t:'특약',label:r.n,q:r.n,cho:r._cho});}});
     for(const key in SYN){const k='질병'+key;if(!seen.has(k)){seen.add(k);SUG.push({t:'질병',label:key,q:key,cho:toCho(key)});}}
     for(const code in CN){const nm=CN[code];if(nm&&nm.length>2){const k='질병'+nm;if(!seen.has(k)){seen.add(k);SUG.push({t:'질병',label:nm,q:nm,cho:toCho(nm),code});}}}
   })();
-  buildCats();
-  render();
+  buildCats(); render();
 }
 
 /* ----- autocomplete suggestions ----- */
