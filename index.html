@@ -435,8 +435,9 @@ function matches(r){
   if(!q) return true;
   if(isChoQuery(q)) return choMatch(r,q);
   const ql=q.toLowerCase();
-  // 1) rider name
-  if(r.n.toLowerCase().includes(ql)) return true;
+  // 1) rider name — (xxx제외) 괄호 안 단어는 매칭에서 제외
+  const nameForMatch = r.n.replace(/\([^()]*제외\)/g,'').toLowerCase();
+  if(nameForMatch.includes(ql)) return true;
   // 2) synonym hits (Korean names) & disease labels
   if(r.s.some(s=>s.includes(q))) return true;
   if(r.l.some(l=>l.includes(q))) return true;
