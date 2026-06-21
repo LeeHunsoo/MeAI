@@ -435,9 +435,15 @@ function matches(r){
   if(!q) return true;
   if(isChoQuery(q)) return choMatch(r,q);
   const ql=q.toLowerCase();
-  // 1) rider name — (xxx제외) 괄호 안 단어는 매칭에서 제외
-  const nameForMatch = r.n.replace(/\([^()]*제외\)/g,'').toLowerCase();
-  if(nameForMatch.includes(ql)) return true;
+  // 1) rider name
+  const fullName = r.n.toLowerCase();
+  const exclWords = (r.n.match(/\(([^()]*?)제외\)/g)||[]).map(w=>w.toLowerCase());
+  // 검색어가 '제외' 괄호 안에만 존재하면(=실제 보장 안하는 단어) 매칭에서 빼되,
+  // 특약명 전체를 입력한 경우(괄호 포함)는 정상 매칭
+  if(fullName.includes(ql)){
+    const inExclOnly = exclWords.some(w=>w.includes(ql)) && !r.n.replace(/\([^()]*?제외\)/g,'').toLowerCase().includes(ql) && !ql.includes('제외');
+    if(!inExclOnly) return true;
+  }
   // 2) synonym hits (Korean names) & disease labels
   if(r.s.some(s=>s.includes(q))) return true;
   if(r.l.some(l=>l.includes(q))) return true;
@@ -568,7 +574,9 @@ function openModal(id){
         +r.k.map(t=>{const nm=codeName(t);return `<span class="chip" data-nm="${esc(nm)}" data-code="${esc(t)}">${esc(t)}</span>`;}).join('')
         +`</div>`
       +(r.x&&r.x.length?`<div class="note" style="margin-top:9px">약관상 보장 제외: `+r.x.map(t=>`<span class="chip" data-nm="${esc(codeName(t))}" data-code="${esc(t)}">${esc(t)}</span>`).join(' ')+`</div>`:''))
-    :'<div class="note">이 특약에는 연결된 KCD 분류표가 없습니다.</div>';
+    :(r.x&&r.x.length
+        ?`<div class="note">보장 코드는 별도 분류표 없이 약관 본문에 정의되어 있습니다.</div><div class="note" style="margin-top:9px">약관상 보장 제외: `+r.x.map(t=>`<span class="chip" data-nm="${esc(codeName(t))}" data-code="${esc(t)}">${esc(t)}</span>`).join(' ')+`</div>`
+        :'<div class="note">이 특약에는 연결된 KCD 분류표가 없습니다.</div>');
   const lbls=r.l.length
     ?(`<div class="lbls">`+r.l.map(esc).join(' · ')+`</div>`)
     :'<div class="note">표시할 질병명이 없습니다.</div>';
@@ -586,7 +594,12 @@ function openModal(id){
         +`<div class="exp"><div class="exbody">${inner}</div>`
         +`<button class="exp-btn" data-more="전체 펼치기 ▾">전체 펼치기 ▾</button></div></div>`;
     });
-  } else tabsBody2='<div class="note" style="padding:8px 0">이 특약에 연결된 별표/분류표가 없습니다.</div>';
+  } else {
+    if(r.x && r.x.length){
+      tabsBody2='<div class="note" style="padding:8px 0">이 특약에 연결된 별표/분류표가 없습니다.</div>'
+        +`<div class="note" style="margin-top:9px">약관상 보장 제외: `+r.x.map(t=>`<span class="chip" data-nm="${esc(codeName(t))}" data-code="${esc(t)}">${esc(t)}</span>`).join(' ')+`</div>`;
+    } else tabsBody2='<div class="note" style="padding:8px 0">이 특약에 연결된 별표/분류표가 없습니다.</div>';
+  }
 
   modalEl.innerHTML=`
    <div class="m-head">
@@ -605,7 +618,7 @@ function openModal(id){
    <div class="m-body" id="mbody"><div class="clause">${fmtClause(r.b)}</div></div>
    <div class="foot open" id="foot">
      <button class="foot-bar" id="footBar" aria-label="관련 정보 펼치기/접기">
-       <span>관련 KCD 코드 <b>${r.k.length}</b><span style="color:var(--muted);font-weight:600"> · </span>질병명 <b>${r.l.length}</b></span>
+       <span>관련 KCD 코드 <b>${r.k.length}</b><span style="color:var(--muted);font-weight:600"> · </span>질병명 <b>${r.l.length}</b>${r.x&&r.x.length?`<span style="color:var(--muted);font-weight:600"> · </span>보장제외 <b>${r.x.length}</b>`:''}</span>
        <span class="fb-chev">▾</span>
      </button>
      <div class="foot-body">
