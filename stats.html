@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>메리츠 검색 통계 | 인기 특약·질병 랭킹</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root{
+    --red:#4F46E5;--red-dk:#4338CA;--red-dp:#3730A3;--tint:#EEF1FE;
+    --ink:#1C1E2B;--muted:#6C7180;--line:#E9EAF2;--paper:#F6F7FB;--gold:#E8972B;
+    --g1:#E8972B;--g2:#9AA1AC;--g3:#C8843E;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif;background:var(--paper);color:var(--ink);-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 16px 60px}
+  /* header */
+  header{background:linear-gradient(135deg,var(--red-dk),var(--red-dp));color:#fff;padding:30px 0 26px;position:relative;overflow:hidden}
+  header .deco{position:absolute;border-radius:50%;background:rgba(255,255,255,.07)}
+  header .hwrap{max-width:1180px;margin:0 auto;padding:0 20px;position:relative;z-index:1}
+  .htitle{font-size:27px;font-weight:800;letter-spacing:-.5px;display:flex;align-items:center;gap:10px}
+  .hsub{font-size:13.5px;opacity:.8;margin-top:6px}
+  .pill{display:inline-block;background:rgba(255,255,255,.2);border-radius:20px;padding:3px 11px;font-size:11px;font-weight:700;vertical-align:middle}
+  /* controls */
+  .controls{display:flex;flex-wrap:wrap;gap:8px;margin:22px 0 18px;align-items:center}
+  .seg{display:inline-flex;background:#fff;border:1px solid var(--line);border-radius:11px;padding:3px;gap:2px}
+  .seg button{border:0;background:none;padding:7px 15px;font-size:13px;font-weight:700;color:var(--muted);border-radius:8px;cursor:pointer;font-family:inherit;transition:.12s}
+  .seg button.on{background:var(--red);color:#fff}
+  .spacer{flex:1}
+  .refresh{border:1px solid var(--line);background:#fff;color:var(--muted);border-radius:9px;padding:8px 13px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit}
+  .refresh:hover{border-color:var(--red);color:var(--red)}
+  /* stat cards */
+  .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-bottom:20px}
+  .stat{background:#fff;border:1px solid var(--line);border-radius:15px;padding:17px 18px;box-shadow:0 4px 14px rgba(45,42,120,.05)}
+  .stat .lab{font-size:12px;color:var(--muted);font-weight:600}
+  .stat .val{font-size:27px;font-weight:800;color:var(--red-dk);margin-top:3px;line-height:1.1}
+  .stat .sub{font-size:11px;color:var(--muted);margin-top:3px}
+  /* grid */
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media(max-width:880px){.grid{grid-template-columns:1fr}.stats-row{grid-template-columns:1fr 1fr}}
+  .card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:0 4px 16px rgba(45,42,120,.05)}
+  .card h2{font-size:16px;font-weight:800;display:flex;align-items:center;gap:8px;margin-bottom:4px}
+  .card .desc{font-size:12px;color:var(--muted);margin-bottom:14px}
+  .card.full{grid-column:1/-1}
+  /* ranking */
+  .rank{list-style:none}
+  .rank li{display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px solid var(--line)}
+  .rank li:last-child{border-bottom:0}
+  .medal{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex-shrink:0;background:var(--tint);color:var(--muted)}
+  .medal.m1{background:linear-gradient(135deg,#F5C04E,#E8972B);color:#fff;box-shadow:0 2px 8px rgba(232,151,43,.4)}
+  .medal.m2{background:linear-gradient(135deg,#C2C8D0,#9AA1AC);color:#fff}
+  .medal.m3{background:linear-gradient(135deg,#D8A268,#C8843E);color:#fff}
+  .rname{flex:1;font-size:13.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .rname small{color:var(--muted);font-weight:500}
+  .rbar{height:7px;background:var(--tint);border-radius:4px;width:78px;overflow:hidden;flex-shrink:0}
+  .rbar i{display:block;height:100%;background:linear-gradient(90deg,var(--red),var(--red-dp));border-radius:4px}
+  .rcnt{font-size:13px;font-weight:800;color:var(--red-dk);width:42px;text-align:right;flex-shrink:0}
+  /* states */
+  .empty,.loading{text-align:center;padding:40px 0;color:var(--muted);font-size:13px}
+  .err{background:#FEF2F2;border:1px solid #FCA5A5;color:#B91C1C;border-radius:11px;padding:13px 15px;font-size:12.5px;margin:14px 0}
+  canvas{max-height:260px}
+  footer{text-align:center;color:var(--muted);font-size:11px;margin-top:30px;line-height:1.7}
+  .toolbadge{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:6px;margin-left:5px}
+  .tb-search{background:#EEF1FE;color:#4338CA}
+  .tb-sim{background:#FEF3E2;color:#B45309}
+</style>
+</head>
+<body>
+<header>
+  <div class="deco" style="width:230px;height:230px;top:-90px;right:60px"></div>
+  <div class="deco" style="width:120px;height:120px;top:20px;right:-20px"></div>
+  <div class="hwrap">
+    <div class="htitle">📊 메리츠 검색 통계 <span class="pill">실시간</span></div>
+    <div class="hsub">설계사들이 가장 많이 찾는 특약과 질병을 한눈에 — 특별약관 검색기 · 보상 시뮬레이터 통합</div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="controls">
+    <div class="seg" id="period">
+      <button data-p="1" class="on">오늘</button>
+      <button data-p="7">주간</button>
+      <button data-p="30">월간</button>
+      <button data-p="365">연간</button>
+      <button data-p="0">전체</button>
+    </div>
+    <div class="seg" id="toolf">
+      <button data-t="" class="on">전체 도구</button>
+      <button data-t="search">검색기</button>
+      <button data-t="simulator">시뮬레이터</button>
+    </div>
+    <div class="spacer"></div>
+    <button class="refresh" id="refreshBtn">↻ 새로고침</button>
+  </div>
+
+  <div id="errbox"></div>
+
+  <div class="stats-row" id="statsRow">
+    <div class="stat"><div class="lab">총 조회수</div><div class="val" id="s-total">–</div><div class="sub">선택 기간</div></div>
+    <div class="stat"><div class="lab">검색 횟수</div><div class="val" id="s-search">–</div><div class="sub">질병·특약 검색</div></div>
+    <div class="stat"><div class="lab">특약 상세조회</div><div class="val" id="s-rider">–</div><div class="sub">특약 클릭</div></div>
+    <div class="stat"><div class="lab">활동 일수</div><div class="val" id="s-days">–</div><div class="sub">로그가 쌓인 날</div></div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h2>🏆 인기 특약 TOP 20</h2>
+      <div class="desc">가장 많이 상세 조회된 특약 순위</div>
+      <ul class="rank" id="riderRank"><li class="loading">불러오는 중…</li></ul>
+    </div>
+    <div class="card">
+      <h2>🦠 인기 질병·검색어 TOP 20</h2>
+      <div class="desc">가장 많이 검색된 질병명·코드 순위</div>
+      <ul class="rank" id="diseaseRank"><li class="loading">불러오는 중…</li></ul>
+    </div>
+    <div class="card full">
+      <h2>📈 기간별 조회 추이</h2>
+      <div class="desc">날짜별 사용량 흐름</div>
+      <canvas id="trendChart"></canvas>
+    </div>
+  </div>
+
+  <footer>
+    메리츠화재 · 영업 현장 지원 도구 통계 · 개인정보 미수집(익명 집계)<br>
+    데이터는 사용자의 검색·조회 시점에 실시간 누적되며, 약관 업데이트와 무관하게 유지됩니다.
+  </footer>
+</div>
+
+<script>
+const SUPA = {
+  url: 'https://iqmlianuyoaypidmfamq.supabase.co',
+  key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlxbWxpYW51eW9heXBpZG1mYW1xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIwNzIzMzMsImV4cCI6MjA5NzY0ODMzM30.e7za_xbYV32yFHEC2gleku7Xl-S3GU0CNBHb-csWhXE'
+};
+let state = { period:1, tool:'' };
+let trendChart = null;
+
+function sb(path){
+  return fetch(SUPA.url+'/rest/v1/'+path, {
+    headers:{ apikey:SUPA.key, Authorization:'Bearer '+SUPA.key }
+  }).then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); });
+}
+function sinceISO(days){
+  if(!days) return null;
+  const d=new Date(); d.setDate(d.getDate()-(days-1)); d.setHours(0,0,0,0);
+  return d.toISOString();
+}
+function esc(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+async function load(){
+  const errbox=document.getElementById('errbox'); errbox.innerHTML='';
+  let q='usage_logs?select=created_at,tool,event,term,rider_name,disease&order=created_at.desc&limit=50000';
+  const since=sinceISO(state.period);
+  if(since) q+='&created_at=gte.'+since;
+  if(state.tool) q+='&tool=eq.'+state.tool;
+
+  let rows;
+  try{ rows = await sb(q); }
+  catch(e){
+    errbox.innerHTML='<div class="err">데이터를 불러오지 못했습니다 ('+esc(e.message)+'). 잠시 후 새로고침하거나, Supabase 설정(테이블·키)을 확인해 주세요. 아직 로그가 0건이면 정상입니다.</div>';
+    rows=[];
+  }
+  render(rows);
+}
+
+function render(rows){
+  // stat cards
+  const total=rows.length;
+  const nSearch=rows.filter(r=>r.event==='search'||r.event==='disease').length;
+  const nRider=rows.filter(r=>r.event==='rider').length;
+  const days=new Set(rows.map(r=>(r.created_at||'').slice(0,10))).size;
+  document.getElementById('s-total').textContent=total.toLocaleString();
+  document.getElementById('s-search').textContent=nSearch.toLocaleString();
+  document.getElementById('s-rider').textContent=nRider.toLocaleString();
+  document.getElementById('s-days').textContent=days.toLocaleString();
+
+  // rider ranking
+  const riders={};
+  rows.filter(r=>r.event==='rider'&&r.rider_name).forEach(r=>{riders[r.rider_name]=(riders[r.rider_name]||0)+1;});
+  renderRank('riderRank', riders, true);
+
+  // disease/term ranking
+  const dz={};
+  rows.filter(r=>r.event==='search'||r.event==='disease').forEach(r=>{
+    const k=(r.disease||r.term||'').trim(); if(k) dz[k]=(dz[k]||0)+1;
+  });
+  renderRank('diseaseRank', dz, false);
+
+  // trend chart
+  renderTrend(rows);
+}
+
+function renderRank(id, map, isRider){
+  const el=document.getElementById(id);
+  const arr=Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0,20);
+  if(!arr.length){ el.innerHTML='<li class="empty">아직 데이터가 없습니다.<br>검색·조회가 쌓이면 여기에 순위가 표시됩니다.</li>'; return; }
+  const max=arr[0][1];
+  el.innerHTML=arr.map((x,i)=>{
+    const [name,cnt]=x;
+    const mc=i===0?'m1':i===1?'m2':i===2?'m3':'';
+    const medal=i<3?(i+1):(i+1);
+    const w=Math.max(6,Math.round(cnt/max*100));
+    return `<li>
+      <span class="medal ${mc}">${medal}</span>
+      <span class="rname">${esc(name)}</span>
+      <span class="rbar"><i style="width:${w}%"></i></span>
+      <span class="rcnt">${cnt}</span>
+    </li>`;
+  }).join('');
+}
+
+function renderTrend(rows){
+  // group by day
+  const byday={};
+  rows.forEach(r=>{ const d=(r.created_at||'').slice(0,10); if(d) byday[d]=(byday[d]||0)+1; });
+  let days=Object.keys(byday).sort();
+  // 기간이 짧으면 비는 날짜도 채움
+  if(state.period && state.period<=30){
+    days=[]; const today=new Date();
+    for(let i=state.period-1;i>=0;i--){ const d=new Date(today); d.setDate(d.getDate()-i); days.push(d.toISOString().slice(0,10)); }
+  }
+  const labels=days.map(d=>d.slice(5).replace('-','/'));
+  const data=days.map(d=>byday[d]||0);
+
+  const ctx=document.getElementById('trendChart');
+  if(trendChart) trendChart.destroy();
+  trendChart=new Chart(ctx,{
+    type:'line',
+    data:{ labels, datasets:[{
+      label:'조회수', data, fill:true,
+      borderColor:'#4F46E5', backgroundColor:'rgba(79,70,229,.12)',
+      borderWidth:2.5, tension:.35, pointRadius:3, pointBackgroundColor:'#4F46E5'
+    }]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false} },
+      scales:{
+        y:{ beginAtZero:true, ticks:{ precision:0, color:'#6C7180' }, grid:{ color:'#EEF1FE' } },
+        x:{ ticks:{ color:'#6C7180', maxRotation:0, autoSkip:true, maxTicksLimit:12 }, grid:{ display:false } }
+      }
+    }
+  });
+}
+
+// controls
+document.getElementById('period').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b)return;
+  document.querySelectorAll('#period button').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on'); state.period=+b.dataset.p; load();
+});
+document.getElementById('toolf').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b)return;
+  document.querySelectorAll('#toolf button').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on'); state.tool=b.dataset.t; load();
+});
+document.getElementById('refreshBtn').addEventListener('click',load);
+
+load();
+</script>
+</body>
+</html>

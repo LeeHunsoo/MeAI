@@ -341,7 +341,7 @@ let DB={riders:[],tables:{},categories:[],synonyms:{},codenames:{},meta:{}};
 
 
 /* ===== 사용 로그 (Supabase) — 익명·개인정보 없음, 오프라인이면 자동 생략 ===== */
-const LOG_CFG = { url:'__SUPABASE_URL__', key:'__SUPABASE_KEY__', tool:'search' };
+const LOG_CFG = { url:'https://iqmlianuyoaypidmfamq.supabase.co', key:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlxbWxpYW51eW9heXBpZG1mYW1xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIwNzIzMzMsImV4cCI6MjA5NzY0ODMzM30.e7za_xbYV32yFHEC2gleku7Xl-S3GU0CNBHb-csWhXE', tool:'search' };
 function logEvent(event, fields){
   try{
     if(!LOG_CFG.url || LOG_CFG.url.indexOf('__')===0) return;      // 키 미설정 시 생략
