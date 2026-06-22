@@ -209,6 +209,27 @@ DATA.riders.forEach(r=>{ r._cho=getChosung((r.s||[]).join("|")); });
 
 const el=id=>document.getElementById(id);
 let activeProd=null, lastQuery="", allOpen=false;
+
+/* ===== 사용 로그 (Supabase) — 익명·개인정보 없음, 오프라인이면 자동 생략 ===== */
+const LOG_CFG = { url:'https://iqmlianuyoaypidmfamq.supabase.co', key:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlxbWxpYW51eW9heXBpZG1mYW1xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIwNzIzMzMsImV4cCI6MjA5NzY0ODMzM30.e7za_xbYV32yFHEC2gleku7Xl-S3GU0CNBHb-csWhXE', tool:'simulator' };
+function logEvent(event, fields){
+  try{
+    if(!LOG_CFG.url || LOG_CFG.url.indexOf('__')===0) return;
+    if(!navigator.onLine) return;
+    const body = Object.assign({ tool:LOG_CFG.tool, event:event }, fields||{});
+    fetch(LOG_CFG.url+'/rest/v1/usage_logs', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', 'apikey':LOG_CFG.key, 'Authorization':'Bearer '+LOG_CFG.key, 'Prefer':'return=minimal' },
+      body: JSON.stringify(body), keepalive:true
+    }).catch(()=>{});
+  }catch(e){}
+}
+let _logTmr;
+function logSearch(q, codes){
+  q=(q||'').trim(); if(q.length<2) return;
+  clearTimeout(_logTmr);
+  _logTmr=setTimeout(()=>logEvent('disease',{ term:q, disease:(codes&&codes.length?codes.join(', '):q) }), 1200);
+}
 el("metaline").textContent=`전체 ${DATA.meta.total}개 특약 · ${DATA.meta.products.join(" / ")}`;
 const codeLabel=c=>DATA.codenames[c]||"";
 
@@ -274,6 +295,7 @@ function runSearch(q){
   if(!lastQuery){el("panel").classList.remove("show");return;}
   const codes=resolveCodes(lastQuery);
   const matched=match(lastQuery);
+  if(matched.length>0) logSearch(lastQuery, codes);
   el("sc-name").textContent=lastQuery;
   el("sc-kcd").textContent=codes.length?("KCD "+codes.join(", ")):"";
   const tl=el("timeline");tl.innerHTML="";
