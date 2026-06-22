@@ -339,6 +339,28 @@ let DB={riders:[],tables:{},categories:[],synonyms:{},codenames:{},meta:{}};
     .catch(e=>{msg.textContent='로드 실패: '+e.message;bar.style.background='#ef4444';});
 })();
 
+
+/* ===== 사용 로그 (Supabase) — 익명·개인정보 없음, 오프라인이면 자동 생략 ===== */
+const LOG_CFG = { url:'__SUPABASE_URL__', key:'__SUPABASE_KEY__', tool:'search' };
+function logEvent(event, fields){
+  try{
+    if(!LOG_CFG.url || LOG_CFG.url.indexOf('__')===0) return;      // 키 미설정 시 생략
+    if(!navigator.onLine) return;                                   // 오프라인 생략
+    const body = Object.assign({ tool:LOG_CFG.tool, event:event }, fields||{});
+    fetch(LOG_CFG.url+'/rest/v1/usage_logs', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', 'apikey':LOG_CFG.key, 'Authorization':'Bearer '+LOG_CFG.key, 'Prefer':'return=minimal' },
+      body: JSON.stringify(body), keepalive:true
+    }).catch(()=>{});                                               // 실패해도 화면엔 영향 없음
+  }catch(e){}
+}
+// 검색어 로그: 입력이 멈추고 1.2초 뒤 1회만 (과다기록 방지)
+let _logTmr;
+function logSearch(q){
+  q=(q||'').trim(); if(q.length<2) return;
+  clearTimeout(_logTmr);
+  _logTmr=setTimeout(()=>logEvent('search',{ term:q }), 1200);
+}
 let CATMAP = {};
 let SYN = {};
 const QUICK = [["갑상선암","C73"],["뇌경색","I63"],["심근경색","I21"],["치매","F00"],["신부전","N18"]];
@@ -640,6 +662,7 @@ function openModal(id){
   const fooEl=modalEl.querySelector('#foot');
   modalEl.querySelector('#footBar').onclick=()=>fooEl.classList.toggle('open');
   pushRecent(r.id);
+  logEvent('rider',{ rider_name:r.n, product:r.p, disease:(r.l&&r.l[0])||'' });
   const mfav=modalEl.querySelector('#mfav');
   if(favs.indexOf(r.id)>=0) mfav.classList.add('on');
   mfav.onclick=()=>{toggleFav(r.id);mfav.classList.toggle('on');};
@@ -700,7 +723,7 @@ const qEl=document.getElementById('q'), clr=document.getElementById('clr');
 let tmr;
 qEl.addEventListener('input',()=>{
   clr.style.display=qEl.value?'block':'none';
-  clearTimeout(tmr); tmr=setTimeout(()=>{state.q=qEl.value;render();},90);
+  clearTimeout(tmr); tmr=setTimeout(()=>{state.q=qEl.value;render();logSearch(qEl.value);},90);
 });
 clr.onclick=()=>{qEl.value='';state.q='';clr.style.display='none';render();qEl.focus();};
 
@@ -767,7 +790,7 @@ function buildSug(v){
   }).join('');
   sugEl.classList.add('show');
 }
-function applyQuery(q){qEl.value=q;state.q=q;clr.style.display=q?'block':'none';sugEl.classList.remove('show');render();}
+function applyQuery(q){qEl.value=q;state.q=q;clr.style.display=q?'block':'none';sugEl.classList.remove('show');render();logEvent('disease',{ term:q, disease:q });}
 qEl.addEventListener('input',()=>buildSug(qEl.value));
 qEl.addEventListener('focus',()=>{if(qEl.value)buildSug(qEl.value);});
 sugEl.addEventListener('mousedown',e=>{const it=e.target.closest('.sug-item');if(!it)return;e.preventDefault();applyQuery(sugList[+it.dataset.i].q);});
