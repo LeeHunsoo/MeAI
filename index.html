@@ -357,7 +357,9 @@ function logEvent(event, fields){
 // 검색어 로그: 입력이 멈추고 1.2초 뒤 1회만 (과다기록 방지)
 let _logTmr;
 function logSearch(q){
-  q=(q||'').trim(); if(q.length<2) return;
+  q=(q||'').trim();
+  if(q.length<2) return;
+  if(/^[\u3131-\u314e]+$/.test(q)) return;   // 초성만 입력된 미완성어는 기록하지 않음
   clearTimeout(_logTmr);
   _logTmr=setTimeout(()=>logEvent('search',{ term:q }), 1200);
 }
@@ -723,7 +725,7 @@ const qEl=document.getElementById('q'), clr=document.getElementById('clr');
 let tmr;
 qEl.addEventListener('input',()=>{
   clr.style.display=qEl.value?'block':'none';
-  clearTimeout(tmr); tmr=setTimeout(()=>{state.q=qEl.value;render();logSearch(qEl.value);},90);
+  clearTimeout(tmr); tmr=setTimeout(()=>{state.q=qEl.value;render();},90);
 });
 clr.onclick=()=>{qEl.value='';state.q='';clr.style.display='none';render();qEl.focus();};
 

@@ -78,8 +78,8 @@
 <div class="wrap">
   <div class="controls">
     <div class="seg" id="period">
-      <button data-p="1" class="on">오늘</button>
-      <button data-p="7">주간</button>
+      <button data-p="1">오늘</button>
+      <button data-p="7" class="on">주간</button>
       <button data-p="30">월간</button>
       <button data-p="365">연간</button>
       <button data-p="0">전체</button>
@@ -156,13 +156,18 @@ function extractCodes(s){
   const found = s.toUpperCase().match(/[A-Z]\d{2}(?:\.\d+)?/g);
   return found || [];
 }
-let state = { period:1, tool:'', dzmode:'group' };
+let state = { period:7, tool:'', dzmode:'group' };
 let trendChart = null;
 
 function sb(path){
   return fetch(SUPA.url+'/rest/v1/'+path, {
     headers:{ apikey:SUPA.key, Authorization:'Bearer '+SUPA.key }
   }).then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); });
+}
+function sbRange(path, from, to){
+  return fetch(SUPA.url+'/rest/v1/'+path, {
+    headers:{ apikey:SUPA.key, Authorization:'Bearer '+SUPA.key, 'Range-Unit':'items', 'Range':from+'-'+to }
+  }).then(r=>{ if(!r.ok && r.status!==206) throw new Error('HTTP '+r.status); return r.json(); });
 }
 function sinceISO(days){
   if(!days) return null;
@@ -173,14 +178,24 @@ function esc(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>'
 
 async function load(){
   const errbox=document.getElementById('errbox'); errbox.innerHTML='';
-  let q='usage_logs?select=created_at,tool,event,term,rider_name,disease&order=created_at.desc&limit=50000';
+  const base='usage_logs?select=created_at,tool,event,term,rider_name,disease&order=created_at.desc';
+  let filt='';
   const since=sinceISO(state.period);
-  if(since) q+='&created_at=gte.'+since;
-  if(state.tool) q+='&tool=eq.'+state.tool;
+  if(since) filt+='&created_at=gte.'+since;
+  if(state.tool) filt+='&tool=eq.'+state.tool;
 
-  let rows;
-  try{ rows = await sb(q); }
-  catch(e){
+  let rows=[];
+  try{
+    // Supabase는 1회 응답이 최대 1,000행이므로 Range 헤더로 페이지네이션하여 전량 조회
+    const PAGE=1000; let from=0;
+    while(true){
+      const part=await sbRange(base+filt, from, from+PAGE-1);
+      rows=rows.concat(part);
+      if(part.length<PAGE) break;     // 마지막 페이지
+      from+=PAGE;
+      if(from>500000) break;          // 안전장치
+    }
+  }catch(e){
     errbox.innerHTML='<div class="err">데이터를 불러오지 못했습니다 ('+esc(e.message)+'). 잠시 후 새로고침하거나, Supabase 설정(테이블·키)을 확인해 주세요. 아직 로그가 0건이면 정상입니다.</div>';
     rows=[];
   }
@@ -204,7 +219,9 @@ function render(rows){
   renderRank('riderRank', riders, true);
 
   // disease ranking — 코드를 질병명/질병군으로 변환해 집계
-  window._dzRows = rows.filter(r=>r.event==='search'||r.event==='disease');
+  // 초성만 입력된 미완성 로그는 통계에서 제외 (과거 로그 자동 정리)
+  const isChoOnly=s=>/^[\u3131-\u314e\s]+$/.test((s||'').trim());
+  window._dzRows = rows.filter(r=>(r.event==='search'||r.event==='disease') && !isChoOnly(r.disease||r.term||''));
   renderDisease();
 
   // trend chart
@@ -275,21 +292,38 @@ function renderTrend(rows){
 
   const ctx=document.getElementById('trendChart');
   if(trendChart) trendChart.destroy();
+  // 막대 위에 숫자를 직접 그려주는 간단 플러그인
+  const valueLabels={
+    id:'valueLabels',
+    afterDatasetsDraw(chart){
+      const {ctx}=chart; const meta=chart.getDatasetMeta(0);
+      ctx.save();
+      ctx.font='bold 11px "Malgun Gothic",sans-serif';
+      ctx.fillStyle='#3730A3'; ctx.textAlign='center';
+      meta.data.forEach((pt,i)=>{
+        const v=chart.data.datasets[0].data[i];
+        if(v>0) ctx.fillText(v, pt.x, pt.y-8);
+      });
+      ctx.restore();
+    }
+  };
   trendChart=new Chart(ctx,{
-    type:'line',
+    type:'bar',
     data:{ labels, datasets:[{
-      label:'조회수', data, fill:true,
-      borderColor:'#4F46E5', backgroundColor:'rgba(79,70,229,.12)',
-      borderWidth:2.5, tension:.35, pointRadius:3, pointBackgroundColor:'#4F46E5'
+      label:'조회수', data,
+      backgroundColor:'rgba(79,70,229,.85)', hoverBackgroundColor:'#3730A3',
+      borderRadius:6, maxBarThickness:46
     }]},
     options:{
       responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{display:false} },
+      layout:{ padding:{ top:22 } },
+      plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:c=>'조회수 '+c.parsed.y } } },
       scales:{
         y:{ beginAtZero:true, ticks:{ precision:0, color:'#6C7180' }, grid:{ color:'#EEF1FE' } },
-        x:{ ticks:{ color:'#6C7180', maxRotation:0, autoSkip:true, maxTicksLimit:12 }, grid:{ display:false } }
+        x:{ ticks:{ color:'#6C7180', maxRotation:0, autoSkip:true, maxTicksLimit:14, font:{size:11} }, grid:{ display:false } }
       }
-    }
+    },
+    plugins:[valueLabels]
   });
 }
 

@@ -226,7 +226,9 @@ function logEvent(event, fields){
 }
 let _logTmr;
 function logSearch(q, codes){
-  q=(q||'').trim(); if(q.length<2) return;
+  q=(q||'').trim();
+  if(q.length<2) return;
+  if(/^[\u3131-\u314e]+$/.test(q)) return;   // 초성만 입력된 미완성어는 기록하지 않음
   clearTimeout(_logTmr);
   _logTmr=setTimeout(()=>logEvent('disease',{ term:q, disease:(codes&&codes.length?codes.join(', '):q) }), 1200);
 }
