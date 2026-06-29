@@ -29,8 +29,8 @@
 </script>
 <style>
   :root{
-    --red:#4F46E5; --red-dk:#3730A3; --red-tint:#EEF1FE;
-    --pri-soft:#E3E7FC; --accent:#F59E0B;
+    --red:#059669; --red-dk:#047857; --red-tint:#E7F7F0;
+    --pri-soft:#D1FAE5; --accent:#F59E0B;
     --ink:#1C1E2B; --muted:#6C7180; --line:#E9EAF2; --paper:#F6F7FB; --card:#FFFFFF;
     --mono:"SF Mono",ui-monospace,"Menlo","Consolas","D2Coding",monospace;
     --sans:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard","Malgun Gothic","맑은 고딕",system-ui,sans-serif;
@@ -44,7 +44,7 @@
 
   /* ---------- header ---------- */
   header{position:sticky;top:0;z-index:40;color:#fff;
-    background:linear-gradient(135deg,#4338CA 0%,#5249E6 48%,#6E66F2 100%);
+    background:linear-gradient(135deg,#047857 0%,#059669 48%,#10B981 100%);
     box-shadow:0 6px 24px rgba(55,48,163,.22)}
   .head-inner{max-width:1180px;margin:0 auto;padding:16px 18px 18px}
   .brand{display:flex;align-items:baseline;gap:11px;flex-wrap:wrap}
@@ -118,7 +118,7 @@
   .exp-btn:hover{background:var(--red-tint)}
   .chips{display:flex;gap:5px;flex-wrap:wrap;margin-top:9px}
   .chip{font-family:var(--mono);font-size:11px;font-weight:600;padding:3px 7px;border-radius:6px;
-    background:#F0F1F8;color:#4B4F60;border:1px solid #E6E7F1}
+    background:#ECFDF5;color:#047857;border:1px solid #C7F0DD}
   .chip.hit{background:var(--red);color:#fff;border-color:var(--red)}
   .chip.more{background:transparent;border:0;color:var(--muted)}
   .foot .chip[data-nm]:not([data-nm=""]),.m-body .chip[data-nm]:not([data-nm=""]){cursor:help;border-bottom:1px dotted #a9adbe}
@@ -259,8 +259,8 @@
   .m-fav.on{color:#F5B301}
   .clause mark.jhit,.bptext mark.jhit,.cmp-table mark.jhit,.m-body mark.jhit{background:#FDE68A;color:#5B3D00;border-radius:3px;padding:0 2px;scroll-margin:40% 0}
   .clause .kw-pay{font-weight:800;color:#B45309}
-  .clause .kw-cov{font-weight:700;color:#4338CA}
-  .clause .kw-code{font-weight:700;color:#3730A3;font-family:var(--mono);font-size:.95em}
+  .clause .kw-cov{font-weight:700;color:#047857}
+  .clause .kw-code{font-weight:700;color:#065F46;font-family:var(--mono);font-size:.95em}
   .clause .kw-exc{font-weight:800;color:#C0322B}
   @media (min-width:900px){
     .modal{max-width:900px}
@@ -275,7 +275,7 @@
   <div class="head-inner">
     <div class="brand">
       <h1>메리츠화재 특별약관 검색</h1>
-      <span class="ver">ver2606</span>
+      <span class="ver">ver2607</span>
     </div>
     <div class="disclaimer">본 내용은 단순 참고용으로 명확한 업무를 위해서는 반드시 약관을 참고하세요.</div>
     <div class="searchwrap">
@@ -325,7 +325,7 @@
 let DB={riders:[],tables:{},categories:[],synonyms:{},codenames:{},meta:{}};
 (function(){
   const ov=document.createElement('div');ov.id='loadov';
-  ov.style.cssText='position:fixed;inset:0;background:#4338CA;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;color:#fff;font-family:sans-serif;gap:16px';
+  ov.style.cssText='position:fixed;inset:0;background:#047857;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;color:#fff;font-family:sans-serif;gap:16px';
   ov.innerHTML='<div style="font-size:28px;font-weight:800;letter-spacing:-1px">메리츠화재 특별약관 검색</div>'
     +'<div id="ldmsg" style="font-size:15px;opacity:.8">약관 데이터 불러오는 중…</div>'
     +'<div style="width:260px;height:6px;background:rgba(255,255,255,.25);border-radius:4px;overflow:hidden">'

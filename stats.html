@@ -7,7 +7,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
   :root{
-    --red:#4F46E5;--red-dk:#4338CA;--red-dp:#3730A3;--tint:#EEF1FE;
+    --red:#059669;--red-dk:#047857;--red-dp:#065F46;--tint:#E7F7F0;
     --ink:#1C1E2B;--muted:#6C7180;--line:#E9EAF2;--paper:#F6F7FB;--gold:#E8972B;
     --g1:#E8972B;--g2:#9AA1AC;--g3:#C8843E;
   }
@@ -31,14 +31,14 @@
   .refresh:hover{border-color:var(--red);color:var(--red)}
   /* stat cards */
   .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-bottom:20px}
-  .stat{background:#fff;border:1px solid var(--line);border-radius:15px;padding:17px 18px;box-shadow:0 4px 14px rgba(45,42,120,.05)}
+  .stat{background:#fff;border:1px solid var(--line);border-radius:15px;padding:17px 18px;box-shadow:0 4px 14px rgba(6,78,59,.05)}
   .stat .lab{font-size:12px;color:var(--muted);font-weight:600}
   .stat .val{font-size:27px;font-weight:800;color:var(--red-dk);margin-top:3px;line-height:1.1}
   .stat .sub{font-size:11px;color:var(--muted);margin-top:3px}
   /* grid */
   .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
   @media(max-width:880px){.grid{grid-template-columns:1fr}.stats-row{grid-template-columns:1fr 1fr}}
-  .card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:0 4px 16px rgba(45,42,120,.05)}
+  .card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:0 4px 16px rgba(6,78,59,.05)}
   .card h2{font-size:16px;font-weight:800;display:flex;align-items:center;gap:8px;margin-bottom:4px}
   .card .desc{font-size:12px;color:var(--muted);margin-bottom:14px}
   .card.full{grid-column:1/-1}
@@ -61,7 +61,7 @@
   canvas{max-height:260px}
   footer{text-align:center;color:var(--muted);font-size:11px;margin-top:30px;line-height:1.7}
   .toolbadge{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:6px;margin-left:5px}
-  .tb-search{background:#EEF1FE;color:#4338CA}
+  .tb-search{background:#E7F7F0;color:#047857}
   .tb-sim{background:#FEF3E2;color:#B45309}
 </style>
 </head>
@@ -299,7 +299,7 @@ function renderTrend(rows){
       const {ctx}=chart; const meta=chart.getDatasetMeta(0);
       ctx.save();
       ctx.font='bold 11px "Malgun Gothic",sans-serif';
-      ctx.fillStyle='#3730A3'; ctx.textAlign='center';
+      ctx.fillStyle='#065F46'; ctx.textAlign='center';
       meta.data.forEach((pt,i)=>{
         const v=chart.data.datasets[0].data[i];
         if(v>0) ctx.fillText(v, pt.x, pt.y-8);
@@ -311,7 +311,7 @@ function renderTrend(rows){
     type:'bar',
     data:{ labels, datasets:[{
       label:'조회수', data,
-      backgroundColor:'rgba(79,70,229,.85)', hoverBackgroundColor:'#3730A3',
+      backgroundColor:'rgba(5,150,105,.85)', hoverBackgroundColor:'#065F46',
       borderRadius:6, maxBarThickness:46
     }]},
     options:{
@@ -319,7 +319,7 @@ function renderTrend(rows){
       layout:{ padding:{ top:22 } },
       plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:c=>'조회수 '+c.parsed.y } } },
       scales:{
-        y:{ beginAtZero:true, ticks:{ precision:0, color:'#6C7180' }, grid:{ color:'#EEF1FE' } },
+        y:{ beginAtZero:true, ticks:{ precision:0, color:'#6C7180' }, grid:{ color:'#E7F7F0' } },
         x:{ ticks:{ color:'#6C7180', maxRotation:0, autoSkip:true, maxTicksLimit:14, font:{size:11} }, grid:{ display:false } }
       }
     },
