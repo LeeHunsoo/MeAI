@@ -134,6 +134,38 @@
 
   @media (prefers-reduced-motion:reduce){*{animation:none !important;transition:none !important;}}
   @media (max-width:520px){h1{font-size:26px;}.scenario-head h2{font-size:23px;}}
+
+  /* 매칭 근거 & 경고 배지 */
+  .rider-badges{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 2px;}
+  .badge{font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:-.01em;
+    display:inline-flex;align-items:center;gap:4px;line-height:1.3;white-space:nowrap;}
+  .badge.b-exact{background:#E7F6EE;color:#0B7A43;}
+  .badge.b-cat{background:#FEF3E2;color:#9A5B0B;}
+  .badge.b-range{background:#E9F0FB;color:#1F4E8F;}
+  .badge.b-tag{background:#EEF0F3;color:#46536B;}
+  .badge.b-ok{background:#E7F6EE;color:#0B7A43;}
+  .badge.b-info{background:#EEF0F3;color:#46536B;}
+  .badge.b-warn{background:#FDECEC;color:#B01C22;}
+
+  /* 보장 타임라인 */
+  .tl-wrap{margin:22px 4px 2px;}
+  .tl-title{font-size:12.5px;font-weight:700;color:var(--muted);margin-bottom:12px;letter-spacing:.02em;}
+  .tl-flow{display:flex;overflow-x:auto;padding:2px 2px 8px;-webkit-overflow-scrolling:touch;}
+  .tl-node{display:flex;flex-direction:column;align-items:center;gap:6px;flex:0 0 auto;
+    position:relative;padding:0 4px;min-width:64px;cursor:pointer;}
+  .tl-node::after{content:"";position:absolute;top:20px;left:50%;width:100%;height:2px;
+    background:var(--line-strong);z-index:0;}
+  .tl-node:last-child::after{display:none;}
+  .tl-dot{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    color:#fff;z-index:1;box-shadow:0 2px 7px rgba(22,36,61,.16);transition:transform .12s;}
+  .tl-node:hover .tl-dot{transform:translateY(-2px);}
+  .tl-label{font-size:11.5px;font-weight:700;color:var(--ink-soft);letter-spacing:-.02em;white-space:nowrap;}
+  .tl-cnt{font-size:11px;font-weight:800;color:var(--ink);background:var(--paper);
+    padding:1px 7px;border-radius:10px;}
+
+  /* 보장유형 필터칩 */
+  .chip.stg{gap:6px;}
+  .stg-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
 </style>
 </head>
 <body>
@@ -167,6 +199,8 @@
       <p class="summary" id="summary"></p>
       <button class="toggle-all" id="toggle-all">전체 펼치기</button>
     </div>
+    <div id="tl-visual"></div>
+    <div id="stage-filter"></div>
     <div id="timeline"></div>
     <div class="disclaimer">· 본 도구는 <b>보상 가능 여부 안내용</b>이며, 실제 지급은 약관상 지급사유 충족·인수심사·고객의 실제 가입 여부에 따라 결정됩니다.<br>· 면책기간·감액기간·중복지급 제한·자기부담금 등은 해당 약관을 반드시 확인하세요. 지급사유는 약관 원문에서 자동 추출한 요약입니다.</div>
     <button class="reset-btn" id="reset">← 검색 초기화</button>
@@ -306,25 +340,51 @@ function _listCovers(split, C){ // split(k 또는 x)이 질의코드 C를 포함
     if(C.indexOf('~')>=0 && split.ex.has(cat)) return true; }
   return false; }
 
+// ── 매칭 "근거" 산출: 정확일치 / 상위카테고리 / 범위 중 어느 경로로 걸렸는지 ──
+function _coverReason(split, C){
+  if(C.indexOf('~')<0){
+    if(split.ex.has(C)) return {how:'exact', via:C};
+    for(const a of _ancestors(C)){ if(a!==C && split.ex.has(a)) return {how:'category', via:a}; }
+  }
+  const cats=_catsOf(C);
+  for(const cat of cats){
+    for(const rg of split.rg){ if(_inRange(cat,rg[0],rg[1])) return {how:'range', via:rg[0]+'~'+rg[1]}; }
+    if(C.indexOf('~')>=0 && split.ex.has(cat)) return {how:'exact', via:cat};
+  }
+  return null;
+}
+// 여러 매칭코드 중 가장 강한 근거 하나 선택 (정확 > 카테고리 > 범위)
+function _bestReason(split, cover){
+  let cat=null, rng=null;
+  for(const c of cover){
+    const r=_coverReason(split, c);
+    if(!r) continue;
+    if(r.how==='exact') return {how:'exact', via:c};
+    if(r.how==='category' && !cat) cat=r;
+    if(r.how==='range' && !rng) rng=r;
+  }
+  return cat||rng||null;
+}
+
 function match(q){
   q=q.trim();const codes=resolveCodes(q);
   const cho=isAllChosung(q)?q:null;const res=[];
   for(const r of DATA.riders){
     if(activeProd && r.p!==activeProd) continue;
-    let hit=false, cover=[];
+    let hit=false, cover=[], hitBy=null, reason=null;
     if(codes.length){
       const kx=r._kx||_splitCodes(r.k), xx=r._xx||_splitCodes(r.x);
       cover=codes.filter(c=> _listCovers(kx,c) && !_listCovers(xx,c));
-      if(cover.length) hit=true;
+      if(cover.length){ hit=true; hitBy='code'; reason=_bestReason(kx,cover); }
     }
     if(!hit && q.length>=2){
       const _s=r.s||[];
       let _sm=_s.some(t=>t===q||t.indexOf(q)>=0);                       // 강한 일치: 동의어가 질의를 포함
       if(!_sm && codes.length===0) _sm=_s.some(t=>t.length>=2 && q.indexOf(t)>=0); // 약한 일치: 질의가 코드로 해석 안될 때만
-      if(_sm) hit=true;
+      if(_sm){ hit=true; hitBy='tag'; }
     }
-    if(!hit && cho && r._cho && r._cho.indexOf(cho)>=0) hit=true;
-    if(hit) res.push({r,cover});
+    if(!hit && cho && r._cho && r._cho.indexOf(cho)>=0){ hit=true; hitBy='cho'; }
+    if(hit) res.push({r,cover,hitBy,reason});
   }
   return res;
 }
@@ -336,8 +396,81 @@ function setAll(open){
   document.querySelectorAll(".stage").forEach(s=>s.classList.toggle("open",open));
   el("toggle-all").textContent=open?"전체 접기":"전체 펼치기";
 }
-function runSearch(q){
-  lastQuery=q.trim();renderDzChips();
+let activeStages=new Set();
+
+// 매칭 근거 배지 (왜 이 특약이 걸렸는지)
+function reasonBadgeHtml(m){
+  if(m.hitBy==='code' && m.reason){
+    if(m.reason.how==='exact')    return `<span class="badge b-exact">✓ 정확 일치</span>`;
+    if(m.reason.how==='category'){ const nm=codeLabel(m.reason.via); return `<span class="badge b-cat">↳ ${m.reason.via}${nm?" "+nm:""} 카테고리로 보장</span>`; }
+    if(m.reason.how==='range')    return `<span class="badge b-range">↳ ${m.reason.via} 범위로 보장</span>`;
+  }
+  if(m.hitBy==='code') return `<span class="badge b-exact">✓ 코드 일치</span>`;
+  if(m.hitBy==='tag')  return `<span class="badge b-tag">질병 태그 일치</span>`;
+  return '';
+}
+// 경고/유의 배지 (면책·감액·유사암제외 등) — 특약명·지급사유 문구에서 추출
+function warnBadgeList(r){
+  const n=r.n||'', c=r.c||''; const out=[];
+  const noReduce=/미적용/.test(n);
+  if(!noReduce && /1년경과시점|90일경과시점/.test(c)) out.push(['b-warn','감액기간 확인']);
+  if(/유사암제외|유사암 및 소액암 제외/.test(n))       out.push(['b-info','유사암 제외']);
+  if(noReduce)                                          out.push(['b-ok','감액·면책 미적용']);
+  if(/체증/.test(n))                                    out.push(['b-info','체증형']);
+  return out;
+}
+function badgesRowHtml(m){
+  let inner=reasonBadgeHtml(m);
+  warnBadgeList(m.r).slice(0,2).forEach(w=>{ inner+=`<span class="badge ${w[0]}">${w[1]}</span>`; });
+  return inner ? `<div class="rider-badges">${inner}</div>` : '';
+}
+
+// 보장 타임라인 (진단→…→사망 흐름 시각화)
+function renderTimeline(matched){
+  const box=el('tl-visual');
+  const present=STAGES.filter(s=>matched.some(m=>m.r.st===s.key));
+  if(present.length<2){ box.innerHTML=''; return; }   // 2단계 이상일 때만 의미있음
+  let nodes='';
+  present.forEach(s=>{
+    const n=matched.filter(m=>m.r.st===s.key).length;
+    nodes+=`<div class="tl-node" data-st="${s.key}">
+      <div class="tl-dot" style="background:${s.color}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none">${ICONS[s.key]}</svg></div>
+      <div class="tl-label">${s.label.replace(' 시','').replace(' 보장','')}</div>
+      <div class="tl-cnt">${n}건</div></div>`;
+  });
+  box.innerHTML=`<div class="tl-wrap"><div class="tl-title">보장 타임라인 · 이 질병/사고의 보장 흐름</div><div class="tl-flow">${nodes}</div></div>`;
+  box.querySelectorAll('.tl-node').forEach(nd=>{
+    nd.addEventListener('click',()=>{ const sec=el('sec-'+nd.getAttribute('data-st')); if(sec) sec.scrollIntoView({behavior:'smooth',block:'center'}); });
+  });
+}
+
+// 보장유형 필터칩 (진단/입원/수술/… 토글)
+function renderStageChips(matched){
+  const box=el('stage-filter');
+  const present=STAGES.filter(s=>matched.some(m=>m.r.st===s.key));
+  if(present.length<2){ box.innerHTML=''; activeStages.clear(); return; }
+  let chips=`<div class="chip stg${activeStages.size===0?' on':''}" data-st="__all">전체</div>`;
+  present.forEach(s=>{
+    const n=matched.filter(m=>m.r.st===s.key).length;
+    const on=activeStages.has(s.key);
+    const style=on?`background:${s.color};border-color:${s.color};color:#fff`:'';
+    chips+=`<div class="chip stg${on?' on':''}" data-st="${s.key}" style="${style}"><span class="stg-dot" style="background:${s.color}"></span>${s.label.replace(' 시','').replace(' 보장','')} ${n}</div>`;
+  });
+  box.innerHTML=`<div class="chip-label" style="margin-top:18px">보장유형 필터</div><div class="chips">${chips}</div>`;
+  box.querySelectorAll('.chip.stg').forEach(ch=>{
+    ch.addEventListener('click',()=>{
+      const k=ch.getAttribute('data-st');
+      if(k==='__all') activeStages.clear();
+      else { if(activeStages.has(k)) activeStages.delete(k); else activeStages.add(k); }
+      runSearch(lastQuery, true);
+    });
+  });
+}
+
+function runSearch(q, keepStage){
+  const nq=q.trim();
+  if(!keepStage && nq!==lastQuery) activeStages.clear();   // 새 검색어면 보장유형 필터 초기화
+  lastQuery=nq;renderDzChips();
   if(!lastQuery){el("panel").classList.remove("show");return;}
   const codes=resolveCodes(lastQuery);
   const matched=match(lastQuery);
@@ -347,27 +480,41 @@ function runSearch(q){
   const tl=el("timeline");tl.innerHTML="";
 
   if(matched.length===0){
+    el("tl-visual").innerHTML="";el("stage-filter").innerHTML="";
     el("summary").innerHTML="";el("toggle-all").style.display="none";
     tl.innerHTML=`<div class="no-result">'<b>${lastQuery}</b>'에 매칭되는 특약을 찾지 못했습니다.<br>병명을 바꾸거나 KCD코드(예: C16)로 검색해 보세요.${activeProd?"<br>상품 필터를 '전체 상품'으로 바꿔보세요.":""}</div>`;
     el("panel").classList.add("show");el("panel").scrollIntoView({behavior:"smooth",block:"start"});return;
   }
   el("toggle-all").style.display="";
-  el("summary").innerHTML=`보상 가능 특약 <b>${matched.length}개</b>${activeProd?` · ${activeProd}`:""}`;
+
+  // 타임라인 + 보장유형 필터칩은 항상 "전체 매칭" 기준으로 렌더
+  renderTimeline(matched);
+  renderStageChips(matched);
+
+  // 필터가 걸려 있으면 화면에 표시할 단계만 추림
+  const filtered = activeStages.size ? matched.filter(m=>activeStages.has(m.r.st)) : matched;
+  el("summary").innerHTML = activeStages.size
+    ? `전체 <b>${matched.length}개</b> 중 <b>${filtered.length}개</b> 표시${activeProd?` · ${activeProd}`:""}`
+    : `보상 가능 특약 <b>${matched.length}개</b>${activeProd?` · ${activeProd}`:""}`;
 
   let firstStage=true;
   STAGES.forEach(stage=>{
-    const items=matched.filter(m=>m.r.st===stage.key);
+    if(activeStages.size && !activeStages.has(stage.key)) return;
+    const items=filtered.filter(m=>m.r.st===stage.key);
     if(items.length===0)return;
     const sec=document.createElement("div");
     sec.className="stage"+(firstStage?" open":"");
+    sec.id="sec-"+stage.key;
     let cards="";
-    items.forEach(({r,cover})=>{
+    items.forEach(m=>{
+      const {r,cover}=m;
+      const badges=badgesRowHtml(m);
       const codeChips=(cover&&cover.length)
         ? `<div class="rider-codes">${cover.map(c=>`<span class="code-pill">${c}${codeLabel(c)?" · "+codeLabel(c):""}</span>`).join("")}</div>`:"";
       const excl=(r.x&&r.x.length)
         ? `<div class="rider-excl">⚠ 제외 코드: ${r.x.map(c=>c+(codeLabel(c)?`(${codeLabel(c)})`:"")).join(", ")}</div>`:"";
       cards+=`<div class="rider" style="border-left-color:${stage.color}">
-        <div class="rider-top"><span class="rider-product">${r.p}</span><span class="rider-name">${r.n}</span></div>
+        <div class="rider-top"><span class="rider-product">${r.p}</span><span class="rider-name">${r.n}</span></div>${badges}
         <div class="rider-cond">${r.c||"약관 지급사유 참조"}</div>${codeChips}${excl}</div>`;
     });
     sec.innerHTML=`
@@ -393,7 +540,8 @@ let timer=null;
 el("search").addEventListener("input",e=>{clearTimeout(timer);const v=e.target.value;timer=setTimeout(()=>runSearch(v),180);});
 el("toggle-all").addEventListener("click",()=>setAll(!allOpen));
 el("reset").addEventListener("click",()=>{
-  el("search").value="";lastQuery="";activeProd=null;
+  el("search").value="";lastQuery="";activeProd=null;activeStages.clear();
+  el("tl-visual").innerHTML="";el("stage-filter").innerHTML="";
   el("panel").classList.remove("show");renderDzChips();renderProdChips();
   window.scrollTo({top:0,behavior:"smooth"});el("search").focus();
 });
