@@ -230,6 +230,16 @@
   .sug-label{font-size:13.5px;color:var(--ink);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .sug-label mark{background:#FDE68A;color:#5B3D00}
   .sug-code{margin-left:auto;font-family:var(--mono);font-size:11.5px;color:var(--muted);flex:none}
+  /* ── 연관 추천(질병계열 · 특약류) ── */
+  .sug-related{padding:11px 14px 13px;background:#FBFAF7;border-top:1px solid var(--line)}
+  .sug-rel-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:7px}
+  .sug-rel-row:first-child{margin-top:0}
+  .sug-rel-h{font-size:10.5px;font-weight:800;color:var(--muted);letter-spacing:.02em;flex:none;margin-right:2px}
+  .sug-rel-chip{font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;cursor:pointer;
+    border:1px solid var(--line);background:#fff;color:var(--ink);transition:.12s;line-height:1.5}
+  .sug-rel-chip:hover{border-color:var(--red);color:var(--red);background:var(--red-tint)}
+  .sug-rel-chip.rider{color:#7C3AED;border-color:#E2D6FA;background:#F8F5FE}
+  .sug-rel-chip.rider:hover{background:#F1EBFD;border-color:#C9B0F0}
   /* card tools */
   .card{padding-right:80px}
   .card-tools{position:absolute;top:11px;right:11px;display:flex;gap:6px;align-items:center;z-index:2}
@@ -875,6 +885,58 @@ const SUG=[]; (function(){ const seen=new Set();
   for(const code in CN){const nm=CN[code];if(nm&&nm.length>2){const k='질병'+nm;if(!seen.has(k)){seen.add(k);SUG.push({t:'질병',label:nm,q:nm,cho:toCho(nm),code});}}}
 })();
 const sugEl=document.getElementById('sug'); let sugList=[], sugSel=-1;
+
+/* ── 연관 추천(질병계열·특약류) 사전 계산 ── */
+const RIDER_BY_ID={}; DB.riders.forEach(r=>RIDER_BY_ID[r.id]=r);
+const DISEASE_RIDERS={}; // 질병 동의어 키 -> 그 질병이 보장되는 특약 id Set
+for(const key in SYN){
+  const codes=SYN[key], set=new Set();
+  DB.riders.forEach(r=>{ if(codes.some(c=>listHasCode(r.k,c,r.x))) set.add(r.id); });
+  DISEASE_RIDERS[key]=set;
+}
+function relatedFor(v){
+  v=(v||'').trim(); if(!v||isChoQuery(v)) return null;
+  const vl=v.toLowerCase();
+  let seedKey=null;
+  if(SYN[v]) seedKey=v;
+  else{ let best=null; for(const k in SYN){ if(k.includes(v)||v.includes(k)){ if(!best||k.length<best.length) best=k; } } seedKey=best; }
+  let seedIds;
+  if(seedKey) seedIds=DISEASE_RIDERS[seedKey];
+  else{
+    const r0=DB.riders.find(r=>r.n.toLowerCase().includes(vl));
+    if(!r0) return null;
+    seedIds=new Set(DB.riders.filter(r=>r.c===r0.c||r.k.some(c=>r0.k.includes(c))).map(r=>r.id));
+  }
+  if(!seedIds||!seedIds.size) return null;
+  // 연관 질병: 시드와 특약을 가장 많이 공유하는 다른 질병 랭킹
+  const scored=[];
+  for(const k in SYN){ if(k===seedKey) continue;
+    let overlap=0; DISEASE_RIDERS[k].forEach(id=>{ if(seedIds.has(id)) overlap++; });
+    if(overlap>0) scored.push({k,overlap});
+  }
+  scored.sort((a,b)=>b.overlap-a.overlap);
+  const relDiseases=scored.slice(0,6).map(x=>x.k);
+  // 연관 특약: 시드 특약군에서 카테고리별로 1개씩, 검색어 자체 이름은 제외
+  const seen=new Set(), relRiders=[];
+  for(const cid of DB.categories.map(c=>c.id)){
+    for(const id of seedIds){
+      const r=RIDER_BY_ID[id];
+      if(r.c!==cid||r.n.toLowerCase().includes(vl)||seen.has(r.n)) continue;
+      seen.add(r.n); relRiders.push(r.n); break;
+    }
+    if(relRiders.length>=6) break;
+  }
+  if(!relDiseases.length && !relRiders.length) return null;
+  return {relDiseases, relRiders};
+}
+function relatedHtml(v){
+  const rel=relatedFor(v); if(!rel) return '';
+  let h='<div class="sug-related">';
+  if(rel.relDiseases.length) h+=`<div class="sug-rel-row"><span class="sug-rel-h">연관 질병</span>${rel.relDiseases.map(k=>`<span class="sug-rel-chip" data-q="${esc(k)}">${esc(k)}</span>`).join('')}</div>`;
+  if(rel.relRiders.length) h+=`<div class="sug-rel-row"><span class="sug-rel-h">연관 특약</span>${rel.relRiders.map(n=>`<span class="sug-rel-chip rider" data-q="${esc(n)}">${esc(n)}</span>`).join('')}</div>`;
+  h+='</div>';
+  return h;
+}
 function buildSug(v){
   v=v.trim(); if(!v){sugEl.classList.remove('show');return;}
   const cho=isChoQuery(v), vl=v.toLowerCase(), scored=[];
@@ -886,18 +948,26 @@ function buildSug(v){
   }
   scored.sort((a,b)=>a.sc-b.sc||a.len-b.len);
   sugList=scored.slice(0,8).map(x=>x.s); sugSel=-1;
-  if(!sugList.length){sugEl.classList.remove('show');return;}
-  sugEl.innerHTML=sugList.map((s,i)=>{
-    let lab=esc(s.label);
-    if(!cho){const idx=s.label.toLowerCase().indexOf(vl);if(idx>=0)lab=esc(s.label.slice(0,idx))+'<mark>'+esc(s.label.slice(idx,idx+v.length))+'</mark>'+esc(s.label.slice(idx+v.length));}
-    return `<div class="sug-item" data-i="${i}"><span class="sug-t t${s.t}">${s.t}</span><span class="sug-label">${lab}</span>${s.code?`<span class="sug-code">${esc(s.code)}</span>`:''}</div>`;
-  }).join('');
+  const relHtml=relatedHtml(v);
+  if(!sugList.length && !relHtml){sugEl.classList.remove('show');return;}
+  let itemsHtml='';
+  if(sugList.length){
+    itemsHtml=sugList.map((s,i)=>{
+      let lab=esc(s.label);
+      if(!cho){const idx=s.label.toLowerCase().indexOf(vl);if(idx>=0)lab=esc(s.label.slice(0,idx))+'<mark>'+esc(s.label.slice(idx,idx+v.length))+'</mark>'+esc(s.label.slice(idx+v.length));}
+      return `<div class="sug-item" data-i="${i}"><span class="sug-t t${s.t}">${s.t}</span><span class="sug-label">${lab}</span>${s.code?`<span class="sug-code">${esc(s.code)}</span>`:''}</div>`;
+    }).join('');
+  }
+  sugEl.innerHTML=itemsHtml+relHtml;
   sugEl.classList.add('show');
 }
 function applyQuery(q){qEl.value=q;state.q=q;clr.style.display=q?'block':'none';sugEl.classList.remove('show');render();logEvent('disease',{ term:q, disease:q });}
 qEl.addEventListener('input',()=>buildSug(qEl.value));
 qEl.addEventListener('focus',()=>{if(qEl.value)buildSug(qEl.value);});
-sugEl.addEventListener('mousedown',e=>{const it=e.target.closest('.sug-item');if(!it)return;e.preventDefault();applyQuery(sugList[+it.dataset.i].q);});
+sugEl.addEventListener('mousedown',e=>{
+  const rel=e.target.closest('.sug-rel-chip'); if(rel){e.preventDefault();applyQuery(rel.dataset.q);return;}
+  const it=e.target.closest('.sug-item');if(!it)return;e.preventDefault();applyQuery(sugList[+it.dataset.i].q);
+});
 qEl.addEventListener('keydown',e=>{
   if(!sugEl.classList.contains('show'))return;
   if(e.key==='ArrowDown'){e.preventDefault();sugSel=Math.min(sugSel+1,sugList.length-1);}
