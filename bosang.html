@@ -187,6 +187,34 @@
     font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap;}
 
 </style>
+
+<style id="mp-style">
+/* ===== MeAI 프롬프트 복사 (v1) ===== */
+.mp-btn{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:9px 14px;border-radius:10px;cursor:pointer;
+  font-size:13px;font-weight:700;line-height:1;white-space:nowrap;
+  color:#065f46;background:#ecfdf5;border:1.5px solid #10b981;
+  transition:background .15s,transform .08s;
+  font-family:inherit;
+}
+.mp-btn:hover{background:#d1fae5;}
+.mp-btn:active{transform:scale(.97);}
+.mp-btn.done{background:#10b981;border-color:#10b981;color:#fff;}
+.mp-row{display:flex;justify-content:flex-end;margin:10px 0 2px;}
+#mp-toast{
+  position:fixed;left:50%;bottom:-80px;transform:translateX(-50%);
+  z-index:99999;max-width:88vw;
+  padding:12px 18px;border-radius:12px;
+  background:#111827;color:#fff;font-size:13.5px;font-weight:600;
+  box-shadow:0 8px 24px rgba(0,0,0,.28);
+  opacity:0;pointer-events:none;
+  transition:bottom .28s cubic-bezier(.22,1,.36,1),opacity .28s;
+  font-family:inherit;text-align:center;
+}
+#mp-toast.show{bottom:32px;opacity:1;}
+#mp-toast.err{background:#b91c1c;}
+</style>
 </head>
 <body>
 <div class="wrap">
@@ -222,7 +250,10 @@
     <div class="scenario-head"><h2 id="sc-name"></h2><span class="kcd" id="sc-kcd"></span></div>
     <div class="summary-row">
       <p class="summary" id="summary"></p>
-      <button class="toggle-all" id="toggle-all">전체 펼치기</button>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <button class="mp-btn" id="mp-copy" title="현재 검색 결과를 MeAI 보장분석 프롬프트로 복사">📋 MeAI 보장분석 프롬프트 복사</button>
+        <button class="toggle-all" id="toggle-all">전체 펼치기</button>
+      </div>
     </div>
     <div id="tl-visual"></div>
     <div id="stage-filter"></div>
@@ -507,10 +538,12 @@ function runSearch(q, keepStage){
   if(matched.length===0){
     el("tl-visual").innerHTML="";el("stage-filter").innerHTML="";
     el("summary").innerHTML="";el("toggle-all").style.display="none";
+    el("mp-copy").style.display="none";lastMatched=[];
     tl.innerHTML=`<div class="no-result">'<b>${lastQuery}</b>'에 매칭되는 특약을 찾지 못했습니다.<br>병명을 바꾸거나 KCD코드(예: C16)로 검색해 보세요.${activeProd?"<br>상품 필터를 '전체 상품'으로 바꿔보세요.":""}</div>`;
     el("panel").classList.add("show");return;
   }
   el("toggle-all").style.display="";
+  el("mp-copy").style.display="";
 
   // 타임라인 + 보장유형 필터칩은 항상 "전체 매칭" 기준으로 렌더
   renderTimeline(matched);
@@ -518,6 +551,7 @@ function runSearch(q, keepStage){
 
   // 필터가 걸려 있으면 화면에 표시할 단계만 추림
   const filtered = activeStages.size ? matched.filter(m=>stOf(m.r).some(s=>activeStages.has(s))) : matched;
+  lastMatched = filtered;   // 프롬프트 복사용 스냅샷
   el("summary").innerHTML = activeStages.size
     ? `전체 <b>${matched.length}개</b> 중 <b>${filtered.length}개</b> 표시${activeProd?` · ${activeProd}`:""}`
     : `보상 가능 특약 <b>${matched.length}개</b>${activeProd?` · ${activeProd}`:""}`;
@@ -639,6 +673,142 @@ el("reset").addEventListener("click",()=>{
   window.scrollTo({top:0,behavior:"smooth"});el("search").focus();
 });
 renderDzChips();renderProdChips();
+
+/* ===================================================================
+   MeAI 프롬프트 자동 생성 (v1)
+   - 용어 규칙: '상해'(재해 X) / 손해보험 관점
+   - 프롬프트 말미: 약관 기준 답변 + 불확실하면 "모른다"
+   =================================================================== */
+const MP = (function(){
+  const RULES = [
+    '[작성 규칙]',
+    '- 손해보험 관점에서 답변할 것.',
+    "- '상해'로 표기할 것 ('재해' 표현 사용 금지).",
+    '- 반드시 약관 기준으로 답변할 것.',
+    '- 약관에서 확인되지 않거나 불확실한 내용은 추측하지 말고 "모른다"고 답할 것.'
+  ].join('\n');
+
+  function toast(msg, ok){
+    let t = document.getElementById('mp-toast');
+    if(!t){ t = document.createElement('div'); t.id = 'mp-toast'; document.body.appendChild(t); }
+    t.textContent = msg;
+    t.className = (ok === false) ? 'show err' : 'show';
+    clearTimeout(t._tm);
+    t._tm = setTimeout(function(){ t.className = ''; }, 2400);
+  }
+
+  /* 사내망·구형 브라우저 대비: Clipboard API 실패 시 execCommand 폴백 */
+  function _legacy(text){
+    try{
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('readonly','');
+      ta.style.cssText = 'position:fixed;top:-1000px;left:-1000px;opacity:0';
+      document.body.appendChild(ta);
+      ta.select(); ta.setSelectionRange(0, text.length);
+      const ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      return !!ok;
+    }catch(e){ return false; }
+  }
+
+  function copy(text, btn){
+    const done = function(){
+      toast('프롬프트를 복사했습니다. MeAI에 붙여넣으세요.');
+      if(btn){
+        const org = btn.innerHTML;
+        btn.innerHTML = '✅ 복사 완료';
+        btn.classList.add('done');
+        setTimeout(function(){ btn.innerHTML = org; btn.classList.remove('done'); }, 1800);
+      }
+    };
+    const fail = function(){
+      if(_legacy(text)) done();
+      else toast('복사에 실패했습니다. 브라우저 권한을 확인해 주세요.', false);
+    };
+    if(navigator.clipboard && window.isSecureContext){
+      navigator.clipboard.writeText(text).then(done).catch(fail);
+    } else { fail(); }
+  }
+
+  return { RULES: RULES, copy: copy, toast: toast };
+})();
+
+/* ── 보장분석 프롬프트 빌더 (보상시뮬레이터) ── */
+let lastMatched = [];          // runSearch 가 화면에 그린 특약 목록(필터 반영)
+
+function buildBosangPrompt(){
+  const m = lastMatched || [];
+  if(!m.length){ MP.toast('복사할 검색 결과가 없습니다.', false); return null; }
+
+  const CODE_CAP = 30;   // 헤더에 표기할 KCD 코드 최대 개수
+  const COVER_CAP = 3;   // 특약 1건당 매칭코드 표기 최대 개수
+  const RIDER_CAP = 150; // 상품별 특약 최대 개수(안전장치)
+
+  const all   = resolveCodes(lastQuery);
+  const codes = all.slice(0, CODE_CAP);
+  const codeTxt = codes.length
+      ? codes.join(', ') + (all.length > CODE_CAP ? ' 외 ' + (all.length - CODE_CAP) + '개' : '')
+      : '해당 없음 (질병태그로 매칭)';
+
+  const stLabel = k => ((STAGES.find(s => s.key === k) || {}).label || '기타').replace(' 시','');
+  const single  = (all.length === 1);   // 코드가 1개뿐이면 특약마다 반복 표기할 필요 없음
+
+  /* 상품별 그룹핑 */
+  const byProd = {};
+  m.forEach(x => { (byProd[x.r.p] = byProd[x.r.p] || []).push(x); });
+
+  let list = '';
+  Object.keys(byProd).forEach(p => {
+    const arr = byProd[p];
+    list += '■ ' + p + ' (' + arr.length + '개)\n';
+    arr.slice(0, RIDER_CAP).forEach(x => {
+      const st = stOf(x.r).map(stLabel).join('/');
+      let cv = '';
+      if(!single && x.cover && x.cover.length){
+        cv = ' · 매칭 ' + x.cover.slice(0, COVER_CAP).join(', ')
+           + (x.cover.length > COVER_CAP ? ' 외 ' + (x.cover.length - COVER_CAP) + '개' : '');
+      }
+      list += '  - ' + x.r.n + ' [' + st + ']' + cv + '\n';
+    });
+    if(arr.length > RIDER_CAP) list += '  - (외 ' + (arr.length - RIDER_CAP) + '개 생략)\n';
+    list += '\n';
+  });
+
+  const filt = activeStages.size
+      ? '\n※ 보장유형 필터 적용 중: ' + [...activeStages].map(stLabel).join(', ')
+      : '';
+
+  return [
+    '[보장분석 요청]',
+    '질병명: ' + lastQuery,
+    'KCD코드: ' + codeTxt,
+    '조회 상품: ' + (activeProd || '전체 상품'),
+    '보상 가능 특약: 총 ' + m.length + '개' + filt,
+    '',
+    list.trim(),
+    '',
+    '[요청 사항]',
+    '1. 위 진단(' + lastQuery + ') 시 보상 가능한 특약을 상품별로 정리해 줘.',
+    '2. 특약별 지급조건 · 면책기간 · 감액기간 · 지급 횟수 제한을 명시해 줘.',
+    '3. 중복지급이 제한되는 특약 조합이 있으면 짚어 줘.',
+    '4. 영업가족이 고객에게 바로 설명할 수 있는 수준으로 정리해 줘.',
+    '',
+    MP.RULES
+  ].join('\n');
+}
+
+(function wireBosangCopy(){
+  const btn = el('mp-copy');
+  if(!btn) return;
+  btn.addEventListener('click', function(){
+    const txt = buildBosangPrompt();
+    if(!txt) return;
+    MP.copy(txt, btn);
+    logEvent('prompt_copy', { term: lastQuery, disease: (resolveCodes(lastQuery).join(', ') || lastQuery) });
+  });
+})();
+
 </script>
 </body>
 </html>

@@ -412,6 +412,34 @@
   }
   .clause .kw-pay mark.jhit,.clause .kw-cov mark.jhit,.clause .kw-code mark.jhit,.clause .kw-exc mark.jhit{color:inherit}
 </style>
+
+<style id="mp-style">
+/* ===== MeAI 프롬프트 복사 (v1) ===== */
+.mp-btn{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:9px 14px;border-radius:10px;cursor:pointer;
+  font-size:13px;font-weight:700;line-height:1;white-space:nowrap;
+  color:#065f46;background:#ecfdf5;border:1.5px solid #10b981;
+  transition:background .15s,transform .08s;
+  font-family:inherit;
+}
+.mp-btn:hover{background:#d1fae5;}
+.mp-btn:active{transform:scale(.97);}
+.mp-btn.done{background:#10b981;border-color:#10b981;color:#fff;}
+.mp-row{display:flex;justify-content:flex-end;margin:10px 0 2px;}
+#mp-toast{
+  position:fixed;left:50%;bottom:-80px;transform:translateX(-50%);
+  z-index:99999;max-width:88vw;
+  padding:12px 18px;border-radius:12px;
+  background:#111827;color:#fff;font-size:13.5px;font-weight:600;
+  box-shadow:0 8px 24px rgba(0,0,0,.28);
+  opacity:0;pointer-events:none;
+  transition:bottom .28s cubic-bezier(.22,1,.36,1),opacity .28s;
+  font-family:inherit;text-align:center;
+}
+#mp-toast.show{bottom:32px;opacity:1;}
+#mp-toast.err{background:#b91c1c;}
+</style>
 </head>
 <body>
 <header>
@@ -910,6 +938,7 @@ function openModal(id){
        </div>
        <div class="m-actions"><button class="m-fav" id="mfav" title="즐겨찾기">★</button><button class="x" id="mx" aria-label="닫기">✕</button></div>
      </div>${famRow}
+     <div class="mp-row"><button class="mp-btn" id="mp-copy" title="이 특약을 MeAI 프롬프트로 복사">📋 MeAI 프롬프트 복사</button></div>
      <div class="tabs-row" style="display:flex;justify-content:space-between;align-items:center;gap:10px">
        <div class="tabs"><button data-t="1" class="on">약관 본문</button><button data-t="2">별표 · 분류표</button></div>
        <div class="fsz"><button data-f="-" class="sm" title="글씨 작게">가−</button><button data-f="0" title="기본">기본</button><button data-f="+" class="big" title="글씨 크게">가＋</button></div>
@@ -937,6 +966,11 @@ function openModal(id){
     requestAnimationFrame(()=>highlightModal(body));
   });
   modalEl.querySelector('#mx').onclick=close;
+  const mpBtn = modalEl.querySelector('#mp-copy');
+  if(mpBtn) mpBtn.onclick = function(){
+    MP.copy(buildRiderPrompt(r), mpBtn);
+    logEvent('prompt_copy', { rider_name: r.n, product: r.p });
+  };
   const fooEl=modalEl.querySelector('#foot');
   modalEl.querySelector('#footBar').onclick=()=>fooEl.classList.toggle('open');
   pushRecent(r.id);
@@ -1253,6 +1287,108 @@ function openCompare(){
 cov.addEventListener('click',e=>{if(e.target===cov)cov.classList.remove('show');});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')cov.classList.remove('show');});
 renderCmpBar();
+
+/* ===================================================================
+   MeAI 프롬프트 자동 생성 (v1)
+   - 용어 규칙: '상해'(재해 X) / 손해보험 관점
+   - 프롬프트 말미: 약관 기준 답변 + 불확실하면 "모른다"
+   =================================================================== */
+const MP = (function(){
+  const RULES = [
+    '[작성 규칙]',
+    '- 손해보험 관점에서 답변할 것.',
+    "- '상해'로 표기할 것 ('재해' 표현 사용 금지).",
+    '- 반드시 약관 기준으로 답변할 것.',
+    '- 약관에서 확인되지 않거나 불확실한 내용은 추측하지 말고 "모른다"고 답할 것.'
+  ].join('\n');
+
+  function toast(msg, ok){
+    let t = document.getElementById('mp-toast');
+    if(!t){ t = document.createElement('div'); t.id = 'mp-toast'; document.body.appendChild(t); }
+    t.textContent = msg;
+    t.className = (ok === false) ? 'show err' : 'show';
+    clearTimeout(t._tm);
+    t._tm = setTimeout(function(){ t.className = ''; }, 2400);
+  }
+
+  /* 사내망·구형 브라우저 대비: Clipboard API 실패 시 execCommand 폴백 */
+  function _legacy(text){
+    try{
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('readonly','');
+      ta.style.cssText = 'position:fixed;top:-1000px;left:-1000px;opacity:0';
+      document.body.appendChild(ta);
+      ta.select(); ta.setSelectionRange(0, text.length);
+      const ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      return !!ok;
+    }catch(e){ return false; }
+  }
+
+  function copy(text, btn){
+    const done = function(){
+      toast('프롬프트를 복사했습니다. MeAI에 붙여넣으세요.');
+      if(btn){
+        const org = btn.innerHTML;
+        btn.innerHTML = '✅ 복사 완료';
+        btn.classList.add('done');
+        setTimeout(function(){ btn.innerHTML = org; btn.classList.remove('done'); }, 1800);
+      }
+    };
+    const fail = function(){
+      if(_legacy(text)) done();
+      else toast('복사에 실패했습니다. 브라우저 권한을 확인해 주세요.', false);
+    };
+    if(navigator.clipboard && window.isSecureContext){
+      navigator.clipboard.writeText(text).then(done).catch(fail);
+    } else { fail(); }
+  }
+
+  return { RULES: RULES, copy: copy, toast: toast };
+})();
+
+/* ── 특약 설명·비교 프롬프트 빌더 (특약검색기) ── */
+function buildRiderPrompt(r){
+  const CAP = 40, LCAP = 25;
+  const cat = (CATMAP[r.c] || {}).label || '';
+
+  const k = r.k || [];
+  const kTxt = k.length
+      ? k.slice(0, CAP).join(', ') + (k.length > CAP ? ' 외 ' + (k.length - CAP) + '개' : '')
+      : '별도 분류표 없음 (약관 본문에 정의)';
+
+  const x = r.x || [];
+  const xTxt = x.length
+      ? x.slice(0, CAP).join(', ') + (x.length > CAP ? ' 외 ' + (x.length - CAP) + '개' : '')
+      : null;
+
+  const l = r.l || [];
+  const lTxt = l.length
+      ? l.slice(0, LCAP).join(' · ') + (l.length > LCAP ? ' 외 ' + (l.length - LCAP) + '개' : '')
+      : null;
+
+  return [
+    '[특약 설명 · 비교 요청]',
+    '특약명: ' + r.n,
+    '상품명: ' + r.p,
+    (cat ? '보장 분류: ' + cat : null),
+    '약관 페이지: p.' + r.pg,
+    '보장 대상 질병코드(KCD): ' + kTxt,
+    (xTxt ? '약관상 보장 제외 코드: ' + xTxt : null),
+    (lTxt ? '대표 질병명: ' + lTxt : null),
+    (r.amt ? '※ 가입금액 구간별 보장금액 차등 있음' : null),
+    '',
+    '[요청 사항]',
+    '1. 이 특약의 보장 범위와 지급 조건을 약관 기준으로 설명해 줘.',
+    '2. 면책기간 · 감액기간 · 지급 횟수 제한이 있으면 명시해 줘.',
+    '3. 같은 상품 내 유사 특약과 무엇이 다른지 비교해 줘.',
+    '4. 영업가족이 고객에게 설명할 때 강조할 포인트와 주의할 점을 정리해 줘.',
+    '',
+    MP.RULES
+  ].filter(function(s){ return s !== null; }).join('\n');
+}
+
 </script>
 </body>
 </html>
