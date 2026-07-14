@@ -251,7 +251,7 @@
     <div class="summary-row">
       <p class="summary" id="summary"></p>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-        <button class="mp-btn" id="mp-copy" title="현재 검색 결과를 MeAI 보장분석 프롬프트로 복사">📋 MeAI 보장분석 프롬프트 복사</button>
+        <button class="mp-btn" id="mp-copy" title="현재 검색 결과를 질병보상 MeAI 조회 프롬프트로 복사">📋 질병보상 MeAI 조회 프롬프트 복사</button>
         <button class="toggle-all" id="toggle-all">전체 펼치기</button>
       </div>
     </div>
@@ -734,7 +734,7 @@ const MP = (function(){
   return { RULES: RULES, copy: copy, toast: toast };
 })();
 
-/* ── 보장분석 프롬프트 빌더 (보상시뮬레이터) ── */
+/* ── 질병보상 MeAI 조회 프롬프트 빌더 (보상시뮬레이터) ── */
 let lastMatched = [];          // runSearch 가 화면에 그린 특약 목록(필터 반영)
 
 function buildBosangPrompt(){
@@ -780,19 +780,21 @@ function buildBosangPrompt(){
       : '';
 
   return [
-    '[보장분석 요청]',
+    '[질병보상 조회 요청]',
     '질병명: ' + lastQuery,
     'KCD코드: ' + codeTxt,
     '조회 상품: ' + (activeProd || '전체 상품'),
-    '보상 가능 특약: 총 ' + m.length + '개' + filt,
+    '당사 보상 가능 특약: 총 ' + m.length + '개' + filt,
     '',
     list.trim(),
     '',
     '[요청 사항]',
-    '1. 위 진단(' + lastQuery + ') 시 보상 가능한 특약을 상품별로 정리해 줘.',
+    '1. 위 질병(' + lastQuery + ') 진단 시 당사 보상 가능 특약을 상품별로 정리해 줘.',
     '2. 특약별 지급조건 · 면책기간 · 감액기간 · 지급 횟수 제한을 명시해 줘.',
     '3. 중복지급이 제한되는 특약 조합이 있으면 짚어 줘.',
     '4. 영업가족이 고객에게 바로 설명할 수 있는 수준으로 정리해 줘.',
+    '',
+    '※ 고객 보유계약 기준의 분석 요청이 아니라, 위 질병에 대한 약관상 보상 가능 여부 조회임.',
     '',
     MP.RULES
   ].join('\n');
