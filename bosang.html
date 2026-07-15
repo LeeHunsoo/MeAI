@@ -741,8 +741,7 @@ function buildBosangPrompt(){
   const m = lastMatched || [];
   if(!m.length){ MP.toast('복사할 검색 결과가 없습니다.', false); return null; }
 
-  const CODE_CAP = 30;   // 헤더에 표기할 KCD 코드 최대 개수
-  const COVER_CAP = 3;   // 특약 1건당 매칭코드 표기 최대 개수
+  const CODE_CAP = 30;   // 입력 정보에 표기할 KCD 코드 최대 개수
   const RIDER_CAP = 150; // 상품별 특약 최대 개수(안전장치)
 
   const all   = resolveCodes(lastQuery);
@@ -752,51 +751,70 @@ function buildBosangPrompt(){
       : '해당 없음 (질병태그로 매칭)';
 
   const stLabel = k => ((STAGES.find(s => s.key === k) || {}).label || '기타').replace(' 시','');
-  const single  = (all.length === 1);   // 코드가 1개뿐이면 특약마다 반복 표기할 필요 없음
 
-  /* 상품별 그룹핑 */
+  /* 상품별 그룹핑 → '당사 보장 가능 특약' 입력 목록 */
   const byProd = {};
   m.forEach(x => { (byProd[x.r.p] = byProd[x.r.p] || []).push(x); });
 
   let list = '';
   Object.keys(byProd).forEach(p => {
     const arr = byProd[p];
-    list += '■ ' + p + ' (' + arr.length + '개)\n';
+    list += '[' + p + ']\n';
     arr.slice(0, RIDER_CAP).forEach(x => {
       const st = stOf(x.r).map(stLabel).join('/');
-      let cv = '';
-      if(!single && x.cover && x.cover.length){
-        cv = ' · 매칭 ' + x.cover.slice(0, COVER_CAP).join(', ')
-           + (x.cover.length > COVER_CAP ? ' 외 ' + (x.cover.length - COVER_CAP) + '개' : '');
-      }
-      list += '  - ' + x.r.n + ' [' + st + ']' + cv + '\n';
+      list += '- ' + x.r.n + (st ? ' (' + st + ')' : '') + '\n';
     });
-    if(arr.length > RIDER_CAP) list += '  - (외 ' + (arr.length - RIDER_CAP) + '개 생략)\n';
+    if(arr.length > RIDER_CAP) list += '- (외 ' + (arr.length - RIDER_CAP) + '개 생략)\n';
     list += '\n';
   });
 
-  const filt = activeStages.size
-      ? '\n※ 보장유형 필터 적용 중: ' + [...activeStages].map(stLabel).join(', ')
-      : '';
-
   return [
-    '[질병보상 조회 요청]',
-    '질병명: ' + lastQuery,
-    'KCD코드: ' + codeTxt,
-    '조회 상품: ' + (activeProd || '전체 상품'),
-    '당사 보상 가능 특약: 총 ' + m.length + '개' + filt,
+    '# 역할',
+    '당신은 보험설계사(영업가족)를 교육하는 베테랑 보험교육 강사입니다.',
+    '답변의 목적은 새로운 보험 지식을 생성하는 것이 아니라, 입력된 질병 정보와 보장 가능한 특약 정보를 보험설계사가 고객에게 쉽게 설명할 수 있도록 재구성하고 요약하는 것입니다.',
     '',
+    '# 입력 정보',
+    '질병명 : ' + lastQuery,
+    'KCD : ' + codeTxt,
+    '',
+    '당사 보장 가능 특약',
     list.trim(),
     '',
-    '[요청 사항]',
-    '1. 위 질병(' + lastQuery + ') 진단 시 당사 보상 가능 특약을 상품별로 정리해 줘.',
-    '2. 특약별 지급조건 · 면책기간 · 감액기간 · 지급 횟수 제한을 명시해 줘.',
-    '3. 중복지급이 제한되는 특약 조합이 있으면 짚어 줘.',
-    '4. 영업가족이 고객에게 바로 설명할 수 있는 수준으로 정리해 줘.',
+    '# 작성 내용',
+    '아래 순서대로 작성해주세요.',
     '',
-    '※ 고객 보유계약 기준의 분석 요청이 아니라, 위 질병에 대한 약관상 보상 가능 여부 조회임.',
+    '## 1. 질병 개요',
+    '- 고객도 이해할 수 있는 쉬운 표현으로 설명',
+    '- 주요 원인',
+    '- 어떤 질병인지 한눈에 이해되도록 설명',
     '',
-    MP.RULES
+    '## 2. 주요 증상',
+    '- 대표적인 증상',
+    '- 병원을 방문하게 되는 일반적인 상황',
+    '',
+    '## 3. 일반적인 치료 과정',
+    '치료 과정을 순서대로 설명합니다. (검사 → 진단 → 수술 여부 판단 → 약물치료 → 시술 → 입원 → 추적관찰 중 해당 질병에 해당되는 과정만)',
+    '',
+    '## 4. 당사 보장 특약 안내',
+    '입력된 특약명을 중심으로 아래를 쉽게 설명합니다.',
+    '- 해당 특약이 일반적으로 어떤 보장을 목적으로 하는 특약인지',
+    '- 해당 질병과 어떤 관련성이 있는지',
+    '- 특약별 특징',
+    '단, 지급조건이나 세부 약관은 추측하지 않으며, 필요한 경우 "세부 지급 기준은 상품 약관 확인이 필요합니다."라고 작성합니다.',
+    '',
+    '## 5. 영업 활용 포인트',
+    '### 핵심 한 줄',
+    '고객에게 전달할 핵심 메시지를 한 줄로 작성합니다.',
+    '### 고객 설명 예시',
+    '실제 상담에서 사용할 수 있는 자연스러운 대화체로 작성합니다.',
+    '',
+    '# 작성 규칙',
+    '1. 반드시 "상해"라는 표현만 사용합니다. ("재해" 표현 사용 금지)',
+    '2. 새로운 보험 지식이나 지급조건을 생성하지 않습니다.',
+    '3. 입력되지 않은 약관 내용을 추측하지 않습니다.',
+    '4. 답변 목적은 분석이 아니라, 입력 정보를 이해하기 쉽게 재구성하는 것입니다.',
+    '5. 표를 적극 활용하여 가독성을 높입니다.',
+    '6. 확인되지 않는 내용은 "상품 약관 확인 필요"라고 작성합니다.'
   ].join('\n');
 }
 
