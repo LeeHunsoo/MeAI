@@ -237,6 +237,30 @@
   var D = JSON.parse(document.getElementById('DATA').textContent);
   var P = D.products, DT = D.dtypes, STD = D.std;
 
+  // ── 사용 로그 (Supabase) : 검색기·시뮬레이터와 동일한 usage_logs 테이블에 기록 ──
+  var LOG = {
+    url:'https://iqmlianuyoaypidmfamq.supabase.co',
+    key:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlxbWxpYW51eW9heXBpZG1mYW1xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIwNzIzMzMsImV4cCI6MjA5NzY0ODMzM30.e7za_xbYV32yFHEC2gleku7Xl-S3GU0CNBHb-csWhXE',
+    tool:'products'
+  };
+  function logEvent(event, fields){
+    try{
+      var body = { tool:LOG.tool, event:event };
+      if(fields){ for(var k in fields){ if(fields[k]) body[k]=fields[k]; } }
+      fetch(LOG.url+'/rest/v1/usage_logs', {
+        method:'POST',
+        headers:{ apikey:LOG.key, Authorization:'Bearer '+LOG.key, 'Content-Type':'application/json', Prefer:'return=minimal' },
+        body: JSON.stringify(body), keepalive:true
+      }).catch(function(){});
+    }catch(e){}
+  }
+  var _searchTimer;
+  function logSearchDebounced(term){          // 타이핑 중 매 글자 기록 방지 (0.8초 멈추면 1회)
+    clearTimeout(_searchTimer);
+    if(!term || term.length<2) return;
+    _searchTimer = setTimeout(function(){ logEvent('search', {term:term}); }, 800);
+  }
+
   var CATS = ['통합상품','간편상품','전용상품','단품상품','펫보험','재물보험','실손의료비'];
   var F2   = ['일반심사','간편심사','건강고지','태아','단체','화재','반려동물'];
   var F3   = ['성인','태아·어린이','단기납 고환급','순수신인','무해지/미지급형','세만기','연만기'];
@@ -266,7 +290,7 @@
   document.querySelectorAll('.chip').forEach(function(c){
     c.onclick = function(){
       var g = +c.dataset.g, v = c.dataset.v, i = sel[g].indexOf(v);
-      if(i<0){ sel[g].push(v); c.classList.add('on'); } else { sel[g].splice(i,1); c.classList.remove('on'); }
+      if(i<0){ sel[g].push(v); c.classList.add('on'); logEvent('filter',{term:v}); } else { sel[g].splice(i,1); c.classList.remove('on'); }
       render();
     };
   });
@@ -369,10 +393,13 @@
       ph.onclick = function(){
         var p = ph.parentNode, was = p.classList.contains('open');
         p.classList.toggle('open');
-        if(!was) setTimeout(function(){
-          var r = p.getBoundingClientRect();
-          if(r.top < 60) window.scrollBy({top:r.top-70, behavior:'smooth'});
-        },230);
+        if(!was){
+          logEvent('view', {term: p.getAttribute('data-n')});
+          setTimeout(function(){
+            var r = p.getBoundingClientRect();
+            if(r.top < 60) window.scrollBy({top:r.top-70, behavior:'smooth'});
+          },230);
+        }
       };
     });
   }
@@ -417,7 +444,7 @@
   document.querySelectorAll('.tab').forEach(function(t){ t.onclick=function(){ tab(t.dataset.tab) } });
 
   var qi = document.getElementById('q'), clr = document.getElementById('clr');
-  qi.oninput = function(){ q = qi.value.trim().toLowerCase(); clr.classList.toggle('on', !!q); render(); };
+  qi.oninput = function(){ q = qi.value.trim().toLowerCase(); clr.classList.toggle('on', !!q); render(); logSearchDebounced(q); };
   clr.onclick = function(){ qi.value=''; q=''; clr.classList.remove('on'); render(); qi.focus(); };
   document.getElementById('reset').onclick = function(){
     sel={1:[],2:[],3:[],4:[]}; q=''; qi.value=''; clr.classList.remove('on');

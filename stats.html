@@ -86,8 +86,10 @@
     </div>
     <div class="seg" id="toolf">
       <button data-t="" class="on">전체 도구</button>
-      <button data-t="search">검색기</button>
-      <button data-t="simulator">시뮬레이터</button>
+      <button data-t="search">특약검색기</button>
+      <button data-t="simulator">보상시뮬레이터</button>
+      <button data-t="products">상품라인업</button>
+      <button data-t="prompts">프롬프트</button>
     </div>
     <div class="spacer"></div>
     <button class="refresh" id="refreshBtn">↻ 새로고침</button>
@@ -103,6 +105,11 @@
   </div>
 
   <div class="grid">
+    <div class="card full">
+      <h2>🧩 도구별 사용량</h2>
+      <div class="desc">대문의 모든 도구를 한곳에 모아 집계합니다 · 각 도구가 로그를 보내면 자동으로 표시됩니다</div>
+      <ul class="rank" id="toolRank"><li class="loading">불러오는 중…</li></ul>
+    </div>
     <div class="card">
       <h2>🏆 인기 특약 TOP 20</h2>
       <div class="desc">가장 많이 상세 조회된 특약 순위</div>
@@ -116,6 +123,11 @@
         <button data-m="code">개별 코드</button>
       </div>
       <ul class="rank" id="diseaseRank"><li class="loading">불러오는 중…</li></ul>
+    </div>
+    <div class="card">
+      <h2>📦 인기 상품 TOP 20</h2>
+      <div class="desc">상품라인업에서 가장 많이 열어본 상품</div>
+      <ul class="rank" id="productRank"><li class="loading">불러오는 중…</li></ul>
     </div>
     <div class="card full">
       <h2>📈 기간별 조회 추이</h2>
@@ -158,6 +170,12 @@ function extractCodes(s){
 }
 let state = { period:7, tool:'', dzmode:'group' };
 let trendChart = null;
+
+// 도구 코드 → 화면 표시 이름 (대문의 4개 도구 + 병합툴이 보내는 태그)
+const TOOL_LABELS = { search:'특약검색기', simulator:'보상시뮬레이터', products:'상품라인업', prompts:'프롬프트' };
+function toolLabel(t){ return TOOL_LABELS[t] || (t ? t : '(미상)'); }
+// 통계에 등장한 적 있는 도구를 기억 → 미리 정의 안 된 도구도 버튼 자동 생성
+let knownTools = new Set(Object.keys(TOOL_LABELS));
 
 function sb(path){
   return fetch(SUPA.url+'/rest/v1/'+path, {
@@ -213,6 +231,14 @@ function render(rows){
   document.getElementById('s-rider').textContent=nRider.toLocaleString();
   document.getElementById('s-days').textContent=days.toLocaleString();
 
+  // 도구별 사용량 (event 종류와 무관하게 tool 필드 기준으로 전부 집계)
+  const byTool={};
+  rows.forEach(r=>{ const t=r.tool||'(미상)'; byTool[t]=(byTool[t]||0)+1; if(r.tool) knownTools.add(r.tool); });
+  const labeledTool={};
+  Object.entries(byTool).forEach(([t,c])=>{ labeledTool[toolLabel(t)]=c; });
+  renderRank('toolRank', labeledTool, false);
+  syncToolButtons();
+
   // rider ranking
   const riders={};
   rows.filter(r=>r.event==='rider'&&r.rider_name).forEach(r=>{riders[r.rider_name]=(riders[r.rider_name]||0)+1;});
@@ -221,8 +247,13 @@ function render(rows){
   // disease ranking — 코드를 질병명/질병군으로 변환해 집계
   // 초성만 입력된 미완성 로그는 통계에서 제외 (과거 로그 자동 정리)
   const isChoOnly=s=>/^[\u3131-\u314e\s]+$/.test((s||'').trim());
-  window._dzRows = rows.filter(r=>(r.event==='search'||r.event==='disease') && !isChoOnly(r.disease||r.term||''));
+  window._dzRows = rows.filter(r=>(r.event==='search'||r.event==='disease') && r.tool!=='products' && !isChoOnly(r.disease||r.term||''));
   renderDisease();
+
+  // 인기 상품 (상품라인업에서 카드를 열어본 횟수 기준)
+  const prods={};
+  rows.filter(r=>r.tool==='products'&&r.event==='view'&&r.term).forEach(r=>{prods[r.term]=(prods[r.term]||0)+1;});
+  renderRank('productRank', prods, false);
 
   // trend chart
   renderTrend(rows);
@@ -256,6 +287,19 @@ function renderDisease(){
     names.forEach(n=>{ map[n]=(map[n]||0)+1; });
   });
   renderRank('diseaseRank', map, false);
+}
+
+// 데이터에서 새로 발견된 도구가 있으면 필터 버튼을 자동으로 추가
+function syncToolButtons(){
+  const box=document.getElementById('toolf');
+  knownTools.forEach(t=>{
+    if(t && !box.querySelector('button[data-t="'+t+'"]')){
+      const b=document.createElement('button');
+      b.setAttribute('data-t', t);
+      b.textContent=toolLabel(t);
+      box.appendChild(b);
+    }
+  });
 }
 
 function renderRank(id, map, isRider){
