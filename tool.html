@@ -395,6 +395,50 @@
   .cmp-table thead th{background:var(--red-tint);color:var(--ink);font-size:13px;font-weight:800;position:sticky;top:0;z-index:1}
   .cmp-table th.rowh{background:var(--paper);font-weight:700;color:var(--muted);width:92px;white-space:nowrap;position:sticky;left:0}
   .cmp-table .diff{background:#FFF7E6}
+  /* ===== 특약 비교 가독성 ===== */
+  .cmp-sum{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 20px;
+    background:var(--paper);border-bottom:1px solid var(--line);font-size:12.5px}
+  .cmp-sum span{border-radius:999px;padding:4px 11px;font-weight:700;letter-spacing:-.01em}
+  .cmp-sum .s-com{background:#EEF0F5;color:#4A5064}
+  .cmp-sum .s-excl{background:#FEF3C7;color:#8A5A00}
+  .cmp-sum .s-own{background:#FFF1F2;color:#9F1239;max-width:46%;overflow:hidden;
+    text-overflow:ellipsis;white-space:nowrap}
+  .cmp-sum .s-own i{font-style:normal;font-weight:600}
+  .cmp-sum b{font-weight:800}
+  .cmp-sum .s-tip{background:transparent;color:var(--muted);font-weight:600;padding-left:2px}
+  .cmp-cnt{font-size:11.5px;color:var(--muted);font-weight:700;margin-bottom:7px}
+  .cmp-cnt b{color:var(--ink)}
+  .cmp-blk{margin-bottom:9px}
+  .cmp-blk-h{font-size:11.5px;font-weight:800;letter-spacing:-.01em;margin-bottom:6px}
+  .cmp-blk.own .cmp-blk-h{color:#9F1239}
+  .cmp-blk.none .cmp-blk-h{color:var(--muted);font-weight:600}
+  .cmp-none{color:var(--muted)}
+  .cmp-tbl{font-size:11.5px;font-weight:700;color:var(--ink-soft,#4A5064);margin-bottom:3px;word-break:keep-all}
+  .cmp-tbl span{font-weight:600;color:var(--muted);font-family:var(--mono)}
+  .chip.nmchip{display:inline-flex;align-items:baseline;gap:5px;max-width:100%}
+  .chip.nmchip i{font-style:normal;font-family:var(--sans,sans-serif);font-weight:600;
+    font-size:11px;opacity:.9;white-space:normal}
+  .chip.c-own{background:#FFF1F2;color:#9F1239;border-color:#F8C9CF}
+  .chip.c-part{background:#FFF7E6;color:#8A5A00;border-color:#F3DCA8}
+  .chip.c-com{background:#F1F2F6;color:#5A6072;border-color:#E3E4EE}
+  .chip.c-exc{background:#F4F4F6;color:#6B7280;border-color:#E3E4EE;text-decoration:line-through}
+  .cmpfold{margin-top:6px;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+  .cmpfold>summary{cursor:pointer;list-style:none;padding:7px 11px;font-size:11.5px;font-weight:700;
+    color:var(--muted);background:var(--paper);user-select:none}
+  .cmpfold>summary::-webkit-details-marker{display:none}
+  .cmpfold>summary::before{content:'▸ ';font-size:10px}
+  .cmpfold[open]>summary::before{content:'▾ '}
+  .cmpfold[open]>summary{border-bottom:1px solid var(--line)}
+  .cmpfold-b{padding:9px 11px;max-height:260px;overflow:auto}
+  .cmp-dz{font-size:12px;line-height:1.7;color:var(--ink-soft,#4A5064);word-break:keep-all}
+  @media (max-width:640px){
+    .cmp-table{min-width:0}
+    .cmp-table th,.cmp-table td{padding:9px 8px;font-size:12px}
+    .cmp-table th.rowh{width:64px;font-size:11.5px}
+    .cmp-sum{padding:9px 14px;gap:6px}
+    .cmp-sum .s-own{max-width:100%}
+    .cmp-sum .s-tip{display:none}
+  }
   .cmp-table .codelist{display:flex;flex-wrap:wrap;gap:4px}
   /* modal fav + highlight */
   .m-actions{display:flex;align-items:center;gap:6px}
@@ -1262,18 +1306,79 @@ cmpClear.onclick=()=>{compareSet=[];renderCmpBar();render();};
 cmpGo.onclick=()=>{if(compareSet.length>=2)openCompare();};
 function openCompare(){
   const rs=compareSet.map(id=>DB.riders.find(x=>x.id===id)).filter(Boolean);
-  const chipsOf=a=>a&&a.length?`<div class="codelist">${a.map(c=>`<span class="chip" data-nm="${esc(codeName(c))}" data-code="${esc(c)}">${esc(c)}</span>`).join('')}</div>`:'<span style="color:var(--muted)">—</span>';
+  const N=rs.length;
+
+  /* ---- 코드 집합 계산 : 공통 / 이 특약만 / 일부 공통 ---- */
+  const sets=rs.map(r=>new Set(r.k||[]));
+  const cnt=new Map();
+  sets.forEach(st=>st.forEach(c=>cnt.set(c,(cnt.get(c)||0)+1)));
+  const common=[...cnt.keys()].filter(c=>cnt.get(c)===N).sort();
+  const onlyOf=i=>[...sets[i]].filter(c=>cnt.get(c)===1).sort();
+  const partOf=i=>[...sets[i]].filter(c=>cnt.get(c)>1&&cnt.get(c)<N).sort();
+
+  const nmChip=(c,cls)=>{const nm=codeName(c);
+    return `<span class="chip nmchip ${cls}" data-nm="${esc(nm)}" data-code="${esc(c)}"><b>${esc(c)}</b>${nm?`<i>${esc(nm)}</i>`:''}</span>`;};
+  const bareChip=(c,cls)=>{const nm=codeName(c);
+    return `<span class="chip ${cls}" data-nm="${esc(nm)}" data-code="${esc(c)}">${esc(c)}</span>`;};
+  const fold=(title,inner,open)=>`<details class="cmpfold"${open?' open':''}><summary>${title}</summary><div class="cmpfold-b">${inner}</div></details>`;
+
+  /* ---- 보장 코드 셀 ---- */
+  function codeCell(i){
+    const r=rs[i], only=onlyOf(i), part=partOf(i);
+    if(!(r.k||[]).length) return '<span class="cmp-none">보장 코드 없음 (약관 본문 정의)</span>';
+    let h=`<div class="cmp-cnt">전체 <b>${r.k.length}</b>개</div>`;
+    if(only.length){
+      const CAP=20, head=only.slice(0,CAP), rest=only.slice(CAP);
+      h+=`<div class="cmp-blk own"><div class="cmp-blk-h">✔ 이 특약에만 있음 · ${only.length}개</div>`
+        +`<div class="codelist">${head.map(c=>nmChip(c,'c-own')).join('')}</div>`
+        +(rest.length?fold(`나머지 ${rest.length}개 더보기`,
+            `<div class="codelist">${rest.map(c=>nmChip(c,'c-own')).join('')}</div>`):'')
+        +`</div>`;
+    }
+    else if(N>1)
+      h+=`<div class="cmp-blk none"><div class="cmp-blk-h">이 특약에만 있는 코드 없음</div></div>`;
+    if(part.length)
+      h+=fold(`일부 특약과만 공통 · ${part.length}개`,
+              `<div class="codelist">${part.map(c=>nmChip(c,'c-part')).join('')}</div>`);
+    if(common.length)
+      h+=fold(`모든 특약 공통 · ${common.length}개`,
+              `<div class="codelist">${common.map(c=>bareChip(c,'c-com')).join('')}</div>`);
+    return h;
+  }
+
+  /* ---- 질병명 셀 (기본 접힘) ---- */
+  function dzCell(i){
+    const l=rs[i].l||[];
+    if(!l.length) return '<span class="cmp-none">—</span>';
+    return fold(`질병명 ${l.length}개 보기`,`<div class="cmp-dz">${l.map(esc).join(' · ')}</div>`);
+  }
+
   const rows=[
     ['제품', rs.map(r=>badgeFor(r.p))],
     ['분류', rs.map(r=>{const c=CATMAP[r.c];return `<span class="badge" style="color:${c.color};border-color:${c.color}40;background:${c.color}12">${c.label}</span>`;})],
     ['약관', rs.map(r=>'p.'+r.pg)],
-    ['보장 코드', rs.map(r=>chipsOf(r.k))],
-    ['보장 제외', rs.map(r=>r.x&&r.x.length?chipsOf(r.x):'<span style="color:var(--muted)">없음</span>')],
-    ['질병명', rs.map(r=>r.l&&r.l.length?esc(r.l.join(' · ')):'<span style="color:var(--muted)">—</span>')]
+    ['연결 별표', rs.map(r=>(r.t&&r.t.length)
+        ? r.t.map(tid=>{const t=DB.tables[tid];return t?`<div class="cmp-tbl">${esc(t.name)} <span>p${t.page}</span></div>`:'';}).join('')
+        : '<span class="cmp-none">없음</span>')],
+    ['보장 코드', rs.map((r,i)=>codeCell(i))],
+    ['보장 제외', rs.map(r=>(r.x&&r.x.length)
+        ? `<div class="codelist">${r.x.map(c=>nmChip(c,'c-exc')).join('')}</div>`
+        : '<span class="cmp-none">없음</span>')],
+    ['질병명', rs.map((r,i)=>dzCell(i))]
   ];
-  let html=`<div class="cmodal-head"><h3>특약 비교 · ${rs.length}개</h3><button class="x" id="cx" aria-label="닫기">✕</button></div>`+
-    `<div class="cmp-grid"><table class="cmp-table"><thead><tr><th class="rowh"></th>`+
-    rs.map(r=>`<th>${esc(r.n)}</th>`).join('')+`</tr></thead><tbody>`;
+
+  /* ---- 요약 스트립 ---- */
+  const sum=`<div class="cmp-sum">`
+    +(common.length
+        ? `<span class="s-com">공통 <b>${common.length}</b></span>`
+        : `<span class="s-excl">겹치는 코드 없음 · 서로 보완 관계</span>`)
+    +rs.map((r,i)=>`<span class="s-own"><i>${esc(r.n)}</i>만 <b>${onlyOf(i).length}</b></span>`).join('')
+    +`<span class="s-tip">${common.length?'고유 코드가 두 특약의 실제 차이입니다':'한쪽에서 보장되는 질병이 다른 쪽에서는 보장되지 않습니다'}</span></div>`;
+
+  let html=`<div class="cmodal-head"><h3>특약 비교 · ${N}개</h3><button class="x" id="cx" aria-label="닫기">✕</button></div>`
+    +sum
+    +`<div class="cmp-grid"><table class="cmp-table"><thead><tr><th class="rowh"></th>`
+    +rs.map(r=>`<th>${esc(r.n)}</th>`).join('')+`</tr></thead><tbody>`;
   rows.forEach(row=>{const label=row[0],vals=row[1];
     const norm=vals.map(v=>v.replace(/<[^>]+>/g,'').replace(/\s+/g,' ').trim());
     const diff=new Set(norm).size>1;
@@ -1284,6 +1389,7 @@ function openCompare(){
   cmodal.querySelector('#cx').onclick=()=>cov.classList.remove('show');
   cov.classList.add('show');
 }
+
 cov.addEventListener('click',e=>{if(e.target===cov)cov.classList.remove('show');});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')cov.classList.remove('show');});
 renderCmpBar();
