@@ -1038,7 +1038,16 @@ function blindSpots(r){
 /* KCD 코드로는 드러나지 않는 지급구조 차이를 특약명에서 읽는다.
    확장어 : 이 말이 붙으면 코드 수와 무관하게 보장이 넓어짐(전이암 독립지급 등)
    제한어 : 이 말이 붙으면 지급 장소·횟수가 좁아짐 */
-const EXPAND_KW=['전이포함','통합','재진단','원격전이','후유장해','플러스','무제한','전이암'];
+const EXPAND_KW=['전이포함','통합','재진단','원격전이','후유장해','플러스','무제한','전이암',
+  '두배','포인트','적립','체증'];
+/* 지급사유(치료 행위·수단)를 한정하는 말. 이 집합이 서로 다르면 애초에 다른 담보이므로
+   보장 코드가 넓든 좁든 상위호환으로 볼 수 없다.
+   예) '매월 계속암치료비' 와 '특정호르몬약물허가치료비' 는 둘 다 암 치료비지만 지급사유가 다름 */
+const METHOD_KW=['호르몬','항암','방사선','약물','표적','면역','통증완화','혈전','용해',
+  '계속','매월','로봇','관혈','도수','부목','깁스','철심','MRI','CT','PET','검사','촬영',
+  '신의료기술','비급여','급여','이식','생활비','주요치료','보철','임플란트','충전','신경치료',
+  '인공관절','재활','호스피스','간병인','요양','한방','정신','시술','절제','제거','응급','중환자',
+  '산정특례','희귀난치','중증','수혈','투석','인공','장기이식','치조골','크라운','신경차단'];
 const RESTRICT_KW=['상급종합병원','종합병원','요양병원','한방병원','정신병원','최초1회한','연간1회한','회한','개한'];
 function kwOf(n,list){
   const s=String(n).replace(/\s/g,'');
@@ -1049,7 +1058,7 @@ function kwOf(n,list){
 function superiors(r){
   const mine=effSet(r); if(mine.size<2) return [];
   const kind=benefitKind(r.n), out=[];
-  const myExp=kwOf(r.n,EXPAND_KW), myRes=kwOf(r.n,RESTRICT_KW);
+  const myExp=kwOf(r.n,EXPAND_KW), myRes=kwOf(r.n,RESTRICT_KW), myMet=kwOf(r.n,METHOD_KW);
   DB.riders.forEach(function(x){
     if(x.p!==r.p || x.id===r.id || !(x.k||[]).length) return;
     if(benefitKind(x.n)!==kind) return;
@@ -1057,6 +1066,9 @@ function superiors(r){
     for(let i=0;i<myExp.length;i++) if(xs.indexOf(myExp[i])<0) return;      // 확장어 미보유
     const xRes=kwOf(x.n,RESTRICT_KW);
     for(let i=0;i<xRes.length;i++) if(myRes.indexOf(xRes[i])<0) return;     // 새로운 제한어
+    const xMet=kwOf(x.n,METHOD_KW);                                        // 지급사유가 다르면 탈락
+    if(xMet.length!==myMet.length) return;
+    for(let i=0;i<myMet.length;i++) if(xMet.indexOf(myMet[i])<0) return;
     const o=effSet(x); if(o.size<=mine.size) return;
     for(const c of mine) if(!o.has(c)) return;
     out.push({r:x, extra:o.size-mine.size});
