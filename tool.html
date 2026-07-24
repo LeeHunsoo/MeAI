@@ -273,6 +273,7 @@
 
   /* ── 상품 히스토리 타임라인 ── */
   .head-top{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap}
+  .brand{flex:1 1 auto;min-width:0}
   .hist-box{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex:none;margin-left:auto;position:relative}
   .hist-new{position:absolute;top:-10px;right:-7px;z-index:3;pointer-events:none;
     background:#FF3B30;color:#fff;font-size:10.5px;font-weight:900;letter-spacing:.06em;
@@ -302,9 +303,19 @@
   }
   .hist-cap{font-size:11px;line-height:1.55;color:rgba(255,255,255,.85);text-align:right;font-weight:600;letter-spacing:-.01em}
   @media(max-width:560px){
-    .hist-box{align-items:flex-start;margin-left:0;width:100%}
-    .hist-new{right:auto;left:170px}
-    .hist-cap{text-align:left}
+    /* 지도 · 히스토리 버튼을 한 줄에 나란히 — 설명문은 접어 세로 공간 절약 */
+    .head-top{gap:9px;align-items:stretch}
+    .map-box,.hist-box{flex:1 1 0;width:auto;min-width:0;margin-left:0;align-items:stretch;gap:0}
+    .map-btn,.hist-btn{width:100%;flex:1;justify-content:center;text-align:center;
+      padding:11px 8px;font-size:12.5px;gap:5px;line-height:1.32;white-space:normal;
+      word-break:keep-all;box-shadow:0 3px 12px rgba(0,0,0,.2)}
+    .map-cap,.hist-cap{display:none}
+    .hist-new{top:-7px;right:-5px;left:auto;font-size:9.5px;padding:2px 6px;border-width:1.5px}
+  }
+  @media(min-width:561px) and (max-width:780px){
+    .map-box,.hist-box{margin-left:0}
+    .map-btn,.hist-btn{font-size:14px;padding:11px 18px}
+    .map-cap,.hist-cap{font-size:10.5px}
   }
   @media(prefers-reduced-motion:reduce){.hist-btn{animation:none}.hist-btn::before{animation:none}.hist-new{animation:none}}
   #hov{position:fixed;inset:0;background:rgba(23,20,40,.55);z-index:120;display:none;padding:20px 12px;overflow:auto}
@@ -454,9 +465,24 @@
   .mm-note{margin:0 24px 20px;padding:12px 14px;background:var(--paper);border-radius:10px;
     font-size:11.5px;color:var(--muted);line-height:1.7;word-break:keep-all}
   @media (max-width:860px){
-    .mm-body{flex-direction:column}
-    .mm-map{width:100%;max-width:340px;margin:0 auto}
+    .mm-body{flex-direction:column;gap:14px}
+    .mm-map{width:100%;max-width:320px;margin:0 auto}
     .mm-list{max-height:none;width:100%}
+  }
+  @media (max-width:560px){
+    #mapov{padding:10px 8px}
+    .mapmodal{border-radius:14px}
+    .mm-head{padding:14px 16px}
+    .mm-title{font-size:16px}
+    .mm-sub{font-size:11px}
+    .mm-tabs{padding:12px 16px 0;flex-wrap:wrap;gap:6px}
+    .mm-tab{font-size:11.5px;padding:8px 11px;flex:1 1 auto;text-align:center}
+    .mm-body{padding:12px 16px 18px}
+    .mm-map{max-width:270px}
+    .zone-card{padding:10px 12px}
+    .zone-nm{font-size:13px}
+    .hosp span{font-size:11.5px;padding:4px 8px}
+    .mm-note{margin:0 16px 16px;font-size:11px}
   }
   /* ===== 보장 분석 탭 ===== */
   .an-sec{margin-bottom:20px}
