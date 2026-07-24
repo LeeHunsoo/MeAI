@@ -413,6 +413,38 @@
   .cmp-blk.own .cmp-blk-h{color:#9F1239}
   .cmp-blk.none .cmp-blk-h{color:var(--muted);font-weight:600}
   .cmp-none{color:var(--muted)}
+  /* ===== 보장 분석 탭 ===== */
+  .an-sec{margin-bottom:20px}
+  .an-h{font-size:13px;font-weight:800;letter-spacing:-.01em;margin:0 0 10px}
+  .an-h.warn{color:#B01C22}
+  .an-h.ok{color:#0B7A43}
+  .an-card{border:1px solid var(--line);border-left:3px solid #E5484D;border-radius:10px;
+    padding:12px 14px;margin-bottom:10px;background:#fff}
+  .an-t{font-size:13.5px;font-weight:700;letter-spacing:-.01em;margin-bottom:8px}
+  .an-t b{color:#B01C22}
+  .an-miss{font-size:12px;color:var(--muted);font-weight:600;margin-bottom:10px;line-height:1.9}
+  .an-miss span{display:inline-block;background:#FDECEC;color:#8A1216;border-radius:6px;
+    padding:2px 8px;margin-right:5px;font-weight:700}
+  .an-fix{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding-top:9px;
+    border-top:1px dashed var(--line)}
+  .an-fix.none{font-size:12px;color:var(--muted);font-weight:600}
+  .an-lb{font-size:11px;font-weight:800;color:#0B7A43;background:#E7F6EE;
+    border-radius:999px;padding:3px 9px}
+  .an-list{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
+  .an-go{font:inherit;cursor:pointer;text-align:left;background:var(--paper);
+    border:1px solid var(--line-strong);border-radius:9px;padding:8px 11px;
+    font-size:12.5px;font-weight:700;letter-spacing:-.01em;color:var(--ink);
+    display:inline-flex;align-items:baseline;gap:7px;max-width:100%}
+  .an-go:hover{background:#fff;border-color:#990011;color:#990011}
+  .an-go i{font-style:normal;font-size:11px;font-weight:700;color:#0B7A43;white-space:nowrap}
+  .an-none{font-size:12.5px;color:var(--muted);line-height:1.7;word-break:keep-all}
+  .an-none.sm{margin-bottom:4px}
+  .an-none b{color:var(--ink)}
+  .an-dot{font-style:normal;display:inline-block;min-width:15px;height:15px;line-height:15px;
+    text-align:center;background:#E5484D;color:#fff;border-radius:999px;font-size:10px;
+    font-weight:800;margin-left:5px;padding:0 4px}
+  .an-foot{margin-top:16px;padding-top:12px;border-top:1px solid var(--line);
+    font-size:11.5px;color:var(--muted);line-height:1.65;word-break:keep-all}
   .cmp-tbl{font-size:11.5px;font-weight:700;color:var(--ink-soft,#4A5064);margin-bottom:3px;word-break:keep-all}
   .cmp-tbl span{font-weight:600;color:var(--muted);font-family:var(--mono)}
   .chip.nmchip{display:inline-flex;align-items:baseline;gap:5px;max-width:100%}
@@ -922,6 +954,133 @@ function render(){
   results.innerHTML=html;
 }
 
+
+/* ==========================================================
+   보장 분석 : 사각지대 / 상위호환 / 함께 가입
+   ========================================================== */
+function _expandCodes(list, dropSub){
+  const s=new Set();
+  (list||[]).forEach(function(t0){
+    let t=String(t0).toUpperCase().trim();
+    if(dropSub && t.indexOf('.')>=0 && t.indexOf('~')<0 && t.indexOf('∼')<0) return;
+    const m=t.match(/^([A-Z])(\d{2})(?:\.\d+)?\s*[~∼]\s*([A-Z]?)(\d{2})/);
+    if(m){
+      const l1=m[1], a=+m[2], l2=m[3]||m[1], b=+m[4];
+      if(l1===l2){ for(let n=a;n<=b;n++) s.add(l1+String(n).padStart(2,'0')); }
+      else{
+        for(let n=a;n<=99;n++) s.add(l1+String(n).padStart(2,'0'));
+        for(let n=0;n<=b;n++) s.add(l2+String(n).padStart(2,'0'));
+      }
+    } else s.add(t.replace(/\..*$/,''));
+  });
+  return s;
+}
+/* 실보장 집합 = 보장코드 − (전체가 제외된 카테고리). 세부코드 제외(S02.5 등)는 카테고리를 지우지 않음 */
+function effSet(r){
+  if(r._eff) return r._eff;
+  const K=_expandCodes(r.k,false);
+  _expandCodes(r.x,true).forEach(function(c){ K.delete(c); });
+  return (r._eff=K);
+}
+function covType(r,c){                       // 'y' 보장 / 'n' 미보장 / 'p' 일부(세부코드 제외 있음)
+  const C=String(c).toUpperCase().replace(/\..*$/,'');
+  if(!effSet(r).has(C)) return 'n';
+  const partial=(r.x||[]).some(function(t){
+    t=String(t).toUpperCase();
+    return t.indexOf('.')>=0 && t.replace(/\..*$/,'')===C;
+  });
+  return partial?'p':'y';
+}
+const BEN=[['통원','통원'],['간병','간병'],['입원','입원'],['일당','입원'],
+           ['수술','수술'],['시술','수술'],['진단','진단'],['치료','치료']];
+function benefitKind(n){
+  for(let i=0;i<BEN.length;i++) if(n.indexOf(BEN[i][0])>=0) return BEN[i][1];
+  return '기타';
+}
+/* ① 사각지대 : 일상 병명 하나가 묶는 코드 중 일부만 보장 */
+function blindSpots(r){
+  if(!(r.k||[]).length) return [];
+  const out=[];
+  for(const term in SYN){
+    const codes=SYN[term]; if(!codes || codes.length<2) continue;
+    const cov=[], miss=[];
+    codes.forEach(function(c){ (covType(r,c)==='n'?miss:cov).push(c); });
+    if(cov.length && miss.length) out.push({term:term,cov:cov,miss:miss});
+  }
+  out.sort(function(a,b){ return a.miss.length-b.miss.length || b.cov.length-a.cov.length; });
+  return out.slice(0,4);
+}
+/* ② 상위호환 : 같은 상품·급부에서 내 보장을 전부 포함하고 더 넓은 특약 */
+function superiors(r){
+  const mine=effSet(r); if(mine.size<2) return [];
+  const kind=benefitKind(r.n), out=[];
+  DB.riders.forEach(function(x){
+    if(x.p!==r.p || x.id===r.id || !(x.k||[]).length) return;
+    if(benefitKind(x.n)!==kind) return;
+    const o=effSet(x); if(o.size<=mine.size) return;
+    for(const c of mine) if(!o.has(c)) return;
+    out.push({r:x, extra:o.size-mine.size});
+  });
+  out.sort(function(a,b){ return a.extra-b.extra; });
+  return out.slice(0,3);
+}
+/* ③ 함께 가입 : 사각지대의 빠진 코드를 메워주는 특약 */
+function fillers(r, miss){
+  const kind=benefitKind(r.n), same=[], other=[];
+  DB.riders.forEach(function(x){
+    if(x.p!==r.p || x.id===r.id || !(x.k||[]).length) return;
+    for(let i=0;i<miss.length;i++) if(covType(x,miss[i])==='n') return;
+    (benefitKind(x.n)===kind?same:other).push(x);
+  });
+  const by=function(a,b){ return effSet(a).size-effSet(b).size; };
+  same.sort(by); other.sort(by);
+  // 같은 급부에 없으면 다른 급부에서라도 제시 (급부 표기)
+  if(same.length) return same.slice(0,2).map(function(x){return {r:x,tag:''};});
+  return other.slice(0,2).map(function(x){return {r:x,tag:benefitKind(x.n)+' 급부'};});
+}
+function _cName(c){ const n=codeName(c); return c+(n?' '+n:''); }
+function _pill(x,sub){
+  return '<button class="an-go" data-goid="'+esc(x.id)+'">'+esc(x.n)
+       +(sub?'<i>'+esc(sub)+'</i>':'')+'</button>';
+}
+function analysisHtml(r){
+  const bs=blindSpots(r), sup=superiors(r);
+  if(!(r.k||[]).length)
+    return '<div class="an-none">이 특약은 KCD 분류표 대신 약관 본문으로 보장을 정의합니다. 코드 기준 분석 대상이 아닙니다.</div>';
+  let h='';
+  /* ① 사각지대 */
+  if(bs.length){
+    h+='<div class="an-sec"><h4 class="an-h warn">⚠ 이 특약의 사각지대</h4>';
+    bs.forEach(function(b){
+      const tot=b.cov.length+b.miss.length;
+      h+='<div class="an-card">'
+       + '<div class="an-t">“'+esc(b.term)+'” 중 <b>'+b.cov.length+' / '+tot+'</b>만 보장</div>'
+       + '<div class="an-miss">빠짐 · '+b.miss.map(function(c){return '<span>'+esc(_cName(c))+'</span>';}).join('')+'</div>';
+      const f=fillers(r,b.miss);
+      h+= f.length
+        ? '<div class="an-fix"><span class="an-lb">함께 가입하면 메워짐</span>'
+          +f.map(function(o){return _pill(o.r,o.tag);}).join('')+'</div>'
+        : '<div class="an-fix none">이 상품 안에서 빠진 부분을 모두 메우는 특약이 없습니다</div>';
+      h+='</div>';
+    });
+    h+='</div>';
+  } else {
+    h+='<div class="an-sec"><h4 class="an-h ok">✓ 사각지대 없음</h4>'
+     + '<div class="an-none">등록된 일상 병명 기준으로, 일부만 보장되는 항목이 없습니다.</div></div>';
+  }
+  /* ② 상위호환 */
+  h+='<div class="an-sec"><h4 class="an-h">⤴ 상위호환 특약</h4>';
+  if(sup.length){
+    h+='<div class="an-none sm">아래 특약은 이 특약이 보장하는 질병을 <b>전부 포함</b>하고 추가로 더 보장합니다.</div>';
+    h+='<div class="an-list">'+sup.map(function(o){
+         return _pill(o.r,'+'+o.extra+'개 질병 추가');
+       }).join('')+'</div>';
+  } else h+='<div class="an-none">같은 상품·급부 안에서 이 특약을 완전히 포함하는 특약이 없습니다. (이 계열에서 가장 넓거나, 고유 보장 영역이 있음)</div>';
+  h+='</div>';
+  h+='<div class="an-foot">※ 보장 범위(KCD 코드) 기준입니다. 가입금액·지급조건·감액기간·가입 가능 여부는 별도 확인이 필요합니다.</div>';
+  return h;
+}
+
 /* ---------- modal ---------- */
 const ov=document.getElementById('ov'), modalEl=document.getElementById('modal');
 function openModal(id){
@@ -973,6 +1132,9 @@ function openModal(id){
     }).join('')+`</div>`;
   }
 
+  const anBody=analysisHtml(r);
+  const anCnt=blindSpots(r).length;
+  const anBadge=anCnt?`<i class="an-dot">${anCnt}</i>`:'';
   modalEl.innerHTML=`
    <div class="m-head">
      <div class="m-top">
@@ -984,7 +1146,7 @@ function openModal(id){
      </div>${famRow}
      <div class="mp-row"><button class="mp-btn" id="mp-copy" title="이 특약을 MeAI 프롬프트로 복사">📋 MeAI 프롬프트 복사</button></div>
      <div class="tabs-row" style="display:flex;justify-content:space-between;align-items:center;gap:10px">
-       <div class="tabs"><button data-t="1" class="on">약관 본문</button><button data-t="2">별표 · 분류표</button></div>
+       <div class="tabs"><button data-t="1" class="on">약관 본문</button><button data-t="2">별표 · 분류표</button><button data-t="3">보장 분석${anBadge}</button></div>
        <div class="fsz"><button data-f="-" class="sm" title="글씨 작게">가−</button><button data-f="0" title="기본">기본</button><button data-f="+" class="big" title="글씨 크게">가＋</button></div>
      </div>
    </div>
@@ -1004,9 +1166,13 @@ function openModal(id){
   modalEl.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{
     modalEl.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('on'));
     b.classList.add('on');
-    body.innerHTML = b.dataset.t==='1'? clauseHTML : tabsBody2;
+    const t=b.dataset.t;
+    body.innerHTML = t==='1'? clauseHTML : (t==='2'? tabsBody2 : anBody);
     body.scrollTop=0;
-    if(b.dataset.t==='2') requestAnimationFrame(()=>wireExp(body));
+    if(t==='3') body.querySelectorAll('.an-go').forEach(function(g){
+      g.onclick=function(){ openModal(g.dataset.goid); };
+    });
+    if(t==='2') requestAnimationFrame(()=>wireExp(body));
     requestAnimationFrame(()=>highlightModal(body));
   });
   modalEl.querySelector('#mx').onclick=close;
