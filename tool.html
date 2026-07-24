@@ -997,26 +997,66 @@ function benefitKind(n){
   for(let i=0;i<BEN.length;i++) if(n.indexOf(BEN[i][0])>=0) return BEN[i][1];
   return '기타';
 }
-/* ① 사각지대 : 일상 병명 하나가 묶는 코드 중 일부만 보장 */
+/* 유사암(소액암) 코드인가 — 기타피부암 C44 · 갑상선암 C73 ·
+   제자리암 D00~D09 · 경계성종양 D37~D48 */
+function isQuasiCancer(c){
+  const C=String(c).toUpperCase().replace(/\..*$/,'');
+  if(C==='C44'||C==='C73') return true;
+  const m=C.match(/^D(\d{2})$/);
+  if(!m) return false;
+  const n=+m[1];
+  return n<=9 || (n>=37 && n<=48);
+}
+/* 약관이 제외코드로 명시한 질병인가 — 설계상 제외는 사각지대가 아님
+   예: 암진단비(유사암제외)의 C44 기타피부암 */
+function isStatedExcl(r,c){
+  const C=String(c).toUpperCase().replace(/\..*$/,'');
+  return _expandCodes(r.x,true).has(C);
+}
+/* ① 사각지대 : 일상 병명 하나가 묶는 코드 중 일부만 보장
+   (약관에 제외로 명시된 코드는 제외 — 특약명에 이미 드러나 있어 경고 가치가 없음) */
 function blindSpots(r){
   if(!(r.k||[]).length) return [];
   const out=[];
   for(const term in SYN){
     const codes=SYN[term]; if(!codes || codes.length<2) continue;
+    /* 일반암과 유사암이 섞인 병명(예: 피부암 = 흑색종 C43 + 기타피부암 C44)은
+       어떤 특약이든 구조적으로 반쪽만 보장하게 되므로 사각지대 판정에서 제외.
+       검색 동작에는 영향을 주지 않는다. */
+    const qz=codes.map(isQuasiCancer);
+    if(qz.indexOf(true)>=0 && qz.indexOf(false)>=0) continue;
     const cov=[], miss=[];
-    codes.forEach(function(c){ (covType(r,c)==='n'?miss:cov).push(c); });
+    codes.forEach(function(c){
+      if(covType(r,c)!=='n') cov.push(c);
+      else if(!isStatedExcl(r,c)) miss.push(c);
+    });
     if(cov.length && miss.length) out.push({term:term,cov:cov,miss:miss});
   }
   out.sort(function(a,b){ return a.miss.length-b.miss.length || b.cov.length-a.cov.length; });
   return out.slice(0,4);
 }
-/* ② 상위호환 : 같은 상품·급부에서 내 보장을 전부 포함하고 더 넓은 특약 */
+/* KCD 코드로는 드러나지 않는 지급구조 차이를 특약명에서 읽는다.
+   확장어 : 이 말이 붙으면 코드 수와 무관하게 보장이 넓어짐(전이암 독립지급 등)
+   제한어 : 이 말이 붙으면 지급 장소·횟수가 좁아짐 */
+const EXPAND_KW=['전이포함','통합','재진단','원격전이','후유장해','플러스','무제한','전이암'];
+const RESTRICT_KW=['상급종합병원','종합병원','요양병원','한방병원','정신병원','최초1회한','연간1회한','회한','개한'];
+function kwOf(n,list){
+  const s=String(n).replace(/\s/g,'');
+  return list.filter(function(k){ return s.indexOf(k)>=0; });
+}
+/* ② 상위호환 : 같은 상품·급부에서 내 보장을 전부 포함하고 더 넓은 특약
+   (내 확장어를 갖추지 못했거나, 내게 없는 제한어가 붙은 특약은 상위호환이 아님) */
 function superiors(r){
   const mine=effSet(r); if(mine.size<2) return [];
   const kind=benefitKind(r.n), out=[];
+  const myExp=kwOf(r.n,EXPAND_KW), myRes=kwOf(r.n,RESTRICT_KW);
   DB.riders.forEach(function(x){
     if(x.p!==r.p || x.id===r.id || !(x.k||[]).length) return;
     if(benefitKind(x.n)!==kind) return;
+    const xs=String(x.n).replace(/\s/g,'');
+    for(let i=0;i<myExp.length;i++) if(xs.indexOf(myExp[i])<0) return;      // 확장어 미보유
+    const xRes=kwOf(x.n,RESTRICT_KW);
+    for(let i=0;i<xRes.length;i++) if(myRes.indexOf(xRes[i])<0) return;     // 새로운 제한어
     const o=effSet(x); if(o.size<=mine.size) return;
     for(const c of mine) if(!o.has(c)) return;
     out.push({r:x, extra:o.size-mine.size});
@@ -1052,7 +1092,7 @@ function analysisHtml(r){
   if(bs.length){
     h+='<div class="an-sec"><h4 class="an-h warn">⚠ 이 특약의 사각지대</h4>';
     bs.forEach(function(b){
-      const tot=b.cov.length+b.miss.length;
+      const tot=b.cov.length+b.miss.length;   // 약관 명시 제외분은 분모에서도 빠짐
       h+='<div class="an-card">'
        + '<div class="an-t">“'+esc(b.term)+'” 중 <b>'+b.cov.length+' / '+tot+'</b>만 보장</div>'
        + '<div class="an-miss">빠짐 · '+b.miss.map(function(c){return '<span>'+esc(_cName(c))+'</span>';}).join('')+'</div>';
