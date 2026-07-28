@@ -656,6 +656,91 @@
 #mp-toast.show{bottom:32px;opacity:1;}
 #mp-toast.err{background:#b91c1c;}
 </style>
+<style id="oncoCss">
+  /* ── 표적항암제 종류 버튼 (히스토리·지도와 동일 톤) ── */
+  .onco-box{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex:none;position:relative}
+  .onco-new{position:absolute;top:-10px;right:-7px;z-index:3;pointer-events:none;
+    background:#FF3B30;color:#fff;font-size:10.5px;font-weight:900;letter-spacing:.06em;
+    padding:3px 8px;border-radius:999px;border:2px solid #fff;box-shadow:0 3px 10px rgba(0,0,0,.3);
+    animation:oncoNewBounce 1.6s ease-in-out infinite}
+  .onco-new::after{content:"";position:absolute;inset:0;border-radius:999px;
+    box-shadow:0 0 0 0 rgba(255,59,48,.55);animation:oncoNewRing 1.6s ease-out infinite}
+  @keyframes oncoNewBounce{0%,100%{transform:translateY(0) scale(1)}12%{transform:translateY(-4px) scale(1.12)}24%{transform:translateY(0) scale(1)}}
+  @keyframes oncoNewRing{0%{box-shadow:0 0 0 0 rgba(255,59,48,.55)}70%,100%{box-shadow:0 0 0 9px rgba(255,59,48,0)}}
+  .onco-btn{display:inline-flex;align-items:center;gap:8px;font-size:15px;font-weight:800;color:var(--red,#D8232A);
+    background:#fff;border:0;border-radius:999px;padding:12px 22px;cursor:pointer;transition:.16s;
+    letter-spacing:-.01em;line-height:1.4;box-shadow:0 4px 16px rgba(0,0,0,.22);
+    position:relative;overflow:hidden}
+  .onco-btn::before{content:'';position:absolute;top:-20%;left:-80%;width:45%;height:140%;
+    background:linear-gradient(115deg,transparent 0%,rgba(219,39,119,.20) 50%,transparent 100%);
+    transform:skewX(-18deg);animation:oncoShine 3.0s ease-in-out infinite}
+  @keyframes oncoShine{0%,55%{left:-80%}85%,100%{left:130%}}
+  .onco-btn:hover{transform:translateY(-2px) scale(1.03);box-shadow:0 8px 24px rgba(0,0,0,.3)}
+  .onco-cap{font-size:11px;line-height:1.55;color:rgba(255,255,255,.85);text-align:right;font-weight:600;letter-spacing:-.01em}
+
+  /* ── 표적항암 모달 ── */
+  #oncoov{position:fixed;inset:0;background:rgba(23,20,40,.55);z-index:130;display:none;padding:20px 12px;overflow:auto}
+  #oncoov.show{display:flex;align-items:flex-start;justify-content:center}
+  .ocmodal{background:#fff;border-radius:18px;max-width:1080px;width:100%;box-shadow:0 24px 70px rgba(0,0,0,.34);overflow:hidden;margin:auto}
+  .oc-concept{margin:16px 24px 4px;padding:14px 16px;background:var(--red-tint);border:1px solid var(--pri-soft);
+    border-left:4px solid var(--red);border-radius:12px;font-size:13.5px;line-height:1.62;color:#7A1D22;font-weight:600}
+  .oc-concept b{color:var(--red);font-weight:800}
+  .oc-body{padding:8px 24px 24px}
+  .oc-type{border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-top:12px;background:#fff}
+  .oc-type-h{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+  .oc-num{flex:none;width:26px;height:26px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#fff}
+  .oc-tname{font-size:15.5px;font-weight:800;letter-spacing:-.02em;color:var(--ink)}
+  .oc-mech{font-size:12.5px;line-height:1.6;color:var(--muted);margin:2px 0 10px;font-weight:500}
+  .oc-drugs{display:flex;flex-wrap:wrap;gap:6px}
+  .oc-chip{display:inline-flex;align-items:baseline;gap:5px;background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:5px 11px;font-size:12px}
+  .oc-chip b{font-weight:800;color:var(--ink)}
+  .oc-chip i{color:var(--muted);font-size:11px;font-style:normal}
+  .oc-empty{font-size:12px;color:var(--muted);background:var(--paper);border:1px dashed var(--line);border-radius:10px;padding:9px 12px}
+  .oc-sec{margin-top:16px}
+  .oc-sec-t{font-size:14px;font-weight:800;color:var(--ink);margin-bottom:4px;display:flex;align-items:center;gap:7px}
+  .oc-flow{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-top:8px}
+  .oc-flow-cancer{font-size:13px;font-weight:800;color:var(--ink);margin-bottom:8px}
+  .oc-steps{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+  .oc-step{display:inline-flex;flex-direction:column;gap:1px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:6px 11px}
+  .oc-step b{font-size:12.5px;font-weight:800;color:var(--ink)}
+  .oc-step i{font-size:10.5px;color:var(--muted);font-weight:600;font-style:normal}
+  .oc-arrow{color:var(--red);font-weight:900;font-size:15px}
+  .oc-plus{color:#0891B2;font-weight:900;font-size:15px}
+  .oc-tbl{width:100%;border-collapse:collapse;margin-top:8px;font-size:12.5px}
+  .oc-tbl th{background:var(--ink);color:#fff;font-weight:700;padding:8px 10px;text-align:left;font-size:11.5px}
+  .oc-tbl td{border-bottom:1px solid var(--line);padding:7px 10px;color:var(--ink)}
+  .oc-tbl tr:hover td{background:var(--paper)}
+  .oc-note{margin-top:10px;font-size:11.5px;line-height:1.6;color:var(--muted);background:var(--paper);border-radius:10px;padding:9px 12px}
+  .oc-note b{color:var(--red)}
+  .oc-rlt-badge{display:inline-block;background:#EDE9FE;color:#5B21B6;font-size:11px;font-weight:800;padding:3px 10px;border-radius:999px}
+  .oc-rlt{border:1.5px solid #C4B5FD;border-radius:14px;padding:16px;margin-top:12px;background:linear-gradient(180deg,#FAF9FF,#fff)}
+  .oc-rlt-name{font-size:17px;font-weight:900;color:#4C1D95;letter-spacing:-.02em}
+  .oc-rlt-sub{font-size:12px;color:var(--muted);font-weight:600;margin-top:2px}
+  .oc-kv{display:grid;grid-template-columns:92px 1fr;gap:7px 12px;margin:12px 0 0;font-size:12.5px;line-height:1.55}
+  .oc-kv dt{color:#7C3AED;font-weight:800}
+  .oc-kv dd{margin:0;color:var(--ink);font-weight:500}
+  .oc-rlt-more{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+  .oc-rlt-item{background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 12px;font-size:12.5px;line-height:1.55}
+  .oc-rlt-item b{color:var(--ink);font-weight:800}
+  .oc-rlt-item span{color:var(--muted)}
+  .oc-warn{background:var(--red-tint);border:2px solid var(--red);border-radius:12px;padding:15px 17px;margin-top:2px;color:var(--red);font-size:16px;font-weight:800;line-height:1.55;letter-spacing:-.01em}
+  .oc-warn b{font-weight:900}
+  .oc-warn .lbl{font-size:17.5px;font-weight:900}
+  @media(max-width:560px){
+    .onco-box{flex:1 1 0;width:auto;min-width:0;margin-left:0;align-items:stretch;gap:0}
+    .onco-btn{width:100%;flex:1;justify-content:center;text-align:center;padding:11px 8px;font-size:12.5px;gap:5px;line-height:1.32;white-space:normal;word-break:keep-all;box-shadow:0 3px 12px rgba(0,0,0,.2)}
+    .onco-cap{display:none}
+    .onco-new{top:-7px;right:-5px;font-size:9.5px;padding:2px 6px;border-width:1.5px}
+    .oc-concept{margin:12px 14px 2px}
+    .oc-body{padding:6px 14px 18px}
+    .oc-kv{grid-template-columns:78px 1fr}
+  }
+  @media(min-width:561px) and (max-width:780px){
+    .onco-btn{font-size:14px;padding:11px 18px}
+    .onco-cap{font-size:10.5px}
+  }
+  @media(prefers-reduced-motion:reduce){.onco-btn::before{animation:none}.onco-new{animation:none}.onco-new::after{animation:none}}
+</style>
 </head>
 <body>
 <header>
@@ -668,7 +753,7 @@
       </div>
       <div class="hist-box">
         <span class="hist-new">NEW</span>
-        <button class="hist-btn" id="histBtn" title="암·순환계·간병·치매 주요 상품 변천사">📜 [주요 상품 히스토리]</button>
+        <button class="hist-btn" id="histBtn" title="암·순환계·간병·치매 주요 상품 변천사">📜 [상품 히스토리]</button>
         <div class="hist-cap">주요 상품군의 출시일과 개정 이슈를<br>시간대별로 확인할 수 있습니다.</div>
       </div>
     </div>
@@ -2183,7 +2268,7 @@ function buildRiderPrompt(r){
   box.className='map-box';
   box.innerHTML='<span class="map-new">NEW</span>'
     +'<button class="map-btn" id="mapBtn" title="제5기 상급종합병원 및 암중점치료기관 위치">'
-    +'\uD83C\uDFE5 [상급종합병원 지도]</button>'
+    +'\uD83C\uDFE5 [상급종합 지도]</button>'
     +'<div class="map-cap">상급종합병원 47 · 암중점 16 · 권역심뇌 15 ·<br>권역외상센터 17개소를 확인할 수 있습니다.</div>';
   host.parentNode.insertBefore(box, host);
 
@@ -2413,6 +2498,140 @@ function buildRiderPrompt(r){
   document.getElementById('mapBtn').onclick=function(){ window.__openHospMap('sang'); };
   ov.addEventListener('click', function(e){ if(e.target===ov) close(); });
   document.addEventListener('keydown', function(e){ if(e.key==='Escape' && ov.classList.contains('show')) close(); });
+})();
+</script>
+
+<script>
+(function(){
+  var host=document.querySelector('.hist-box');
+  if(!host||!host.parentNode) return;
+  var anchor=document.querySelector('.map-box')||host;   /* 표적항암 버튼을 가장 왼쪽에 */
+  var box=document.createElement('div');
+  box.className='onco-box';
+  box.innerHTML='<span class="onco-new">NEW</span>'
+    +'<button class="onco-btn" id="oncoBtn" title="표적항암제 작용기전 6종류 · 방사성 리간드 약제">🎯 [표적항암 종류]</button>'
+    +'<div class="onco-cap">표적항암제 6종류(작용기전)와<br>방사성 리간드 약제를 확인할 수 있습니다.</div>';
+  host.parentNode.insertBefore(box, anchor);
+
+  var ov=document.createElement('div'); ov.id='oncoov';
+  ov.innerHTML='<div class="ocmodal" id="ocmodal"></div>';
+  document.body.appendChild(ov);
+  var modal=ov.querySelector('#ocmodal');
+  var tab='types';
+
+  function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+
+  var TYPES=[
+    {c:'#2563EB',n:'소분자 항암치료제',m:'저분자 화합물이 암세포 내부의 특정 유전자·신호전달 과정을 억제해 암세포 증식을 막습니다. (주로 경구약)',
+     d:[['타그리소','폐암'],['렉라자','폐암'],['버제니오','유방암'],['키스칼리','유방암'],['린파자','난소·유방·전립선암'],['렌비마','간·신장·갑상선암'],['글리벡','백혈병'],['스프라이셀','백혈병'],['벤클렉스타','백혈병'],['알레센자','폐암'],['지오트립','폐암'],['타쎄바','폐암'],['제줄라','난소암'],['벨케이드','골수종']]},
+    {c:'#0891B2',n:'단일클론 항체 항암치료제',m:'항체가 암세포 표면의 특정 단백질에 결합해 성장을 억제하거나 면역반응을 유도합니다. (주로 주사제)',
+     d:[['허셉틴','유방·위암'],['퍼제타','유방암'],['아바스틴','대장·폐·신장·난소암 등'],['트룩시마','림프종·백혈병'],['얼비툭스','대장암'],['사이람자','위·대장·폐·간암'],['다잘렉스','골수종']]},
+    {c:'#7C3AED',n:'면역관문억제제',m:'면역세포의 억제 신호를 차단해, 면역세포가 스스로 암세포를 공격하도록 유도합니다.',
+     d:[['키트루다','위·간·유방암 등'],['옵디보','폐·간·신장·흑색종 등'],['티쎈트릭','간·폐·유방암'],['임핀지','폐·방광·담도암'],['여보이','흑색종·신장·대장암'],['바벤시오','요로상피암'],['리브타요','폐·피부암'],['젬퍼리','자궁내막암'],['테빔브라','식도·폐암'],['이뮤도','간암']]},
+    {c:'#DB2777',n:'항체약물중합체(ADC) 항암치료제',m:'암세포를 인식하는 항체에 항암약물을 접합해, 암세포만을 특이적으로 공격합니다.',
+     d:[['엔허투','유방·위·폐암'],['트로델비','유방암'],['캐싸일라','유방암'],['파드셉','요로상피암'],['애드세트리스','림프종·백혈병'],['마일로탁','백혈병'],['폴라이비','림프종·백혈병'],['베스폰사','백혈병']]},
+    {c:'#EA580C',n:'카티(CAR-T) 항암치료제',m:'환자의 면역세포(T세포)를 채취해 암세포를 인식하도록 유전자 조작한 뒤 다시 주입, 암세포를 직접 공격하게 합니다.',
+     d:[['킴리아','백혈병·림프종'],['카빅티','골수종'],['예스카타','림프종·백혈병']]},
+    {c:'#6B7280',n:'기타 표적항암제',m:'향후 새로운 작용기전으로 (1)~(5)에 분류할 수 없는 신약이 개발될 경우 분류됩니다.',d:[]}
+  ];
+  var SEQ=[
+    {cancer:'HER2 양성 유방암',steps:[['허셉틴','단일클론 항체'],['엔허투','ADC'],['투키사','소분자']]},
+    {cancer:'삼중음성 유방암',steps:[['키트루다','면역관문억제제'],['린파자','소분자'],['트로델비','ADC']]}
+  ];
+  var COMBO=[
+    ['요로상피암','키트루다','면역관문억제제','파드셉','ADC'],
+    ['간암','티쎈트릭','면역관문억제제','아바스틴','단일클론 항체'],
+    ['폐암','렉라자','소분자','리브리반트','단일클론 항체'],
+    ['신장암','키트루다','면역관문억제제','인라이타','소분자']
+  ];
+  var NONBEN=[
+    ['신장암','웰리렉','소분자'],['전립선암','아키가','소분자'],['폐암','타브렉타','소분자'],
+    ['유방암','투키사','소분자'],['대장암','프루자클라','소분자'],['림프종','컬럼비','단일클론 항체'],
+    ['골수종','살클리사','단일클론 항체'],['폐암','임델트라','단일클론 항체'],['피부암·폐암','리브타요','면역관문억제제'],
+    ['골수종','카빅티','카티(CAR-T)'],['림프종·백혈병','예스카타','카티(CAR-T)']
+  ];
+
+  function typesHtml(){
+    return '<div class="oc-concept">표적항암제를 작용기전에 따라 <b>6가지 종류</b>로 분류합니다. 서로 다른 약물종류의 표적항암제로 1·2·3차 또는 병용 치료 시, <b>약물종류 개수에 따라 복층 보장</b>됩니다.</div>'
+      +'<div class="oc-body">'+TYPES.map(function(t,i){
+        var chips=t.d.length
+          ? '<div class="oc-drugs">'+t.d.map(function(x){return '<span class="oc-chip"><b>'+esc(x[0])+'</b><i>'+esc(x[1])+'</i></span>';}).join('')+'</div>'
+          : '<div class="oc-empty">현재 사용되는 표적항암제는 모두 위 (1)~(5) 중 하나에 해당합니다.</div>';
+        return '<div class="oc-type"><div class="oc-type-h"><span class="oc-num" style="background:'+t.c+'">'+(i+1)+'</span>'
+          +'<span class="oc-tname">'+esc(t.n)+'</span></div>'
+          +'<div class="oc-mech">'+esc(t.m)+'</div>'+chips+'</div>';
+      }).join('')+'</div>';
+  }
+  function therapyHtml(){
+    var seq=SEQ.map(function(s){
+      var steps=s.steps.map(function(st,idx){
+        return (idx?'<span class="oc-arrow">→</span>':'')+'<span class="oc-step"><b>'+esc(st[0])+'</b><i>'+esc(st[1])+'</i></span>';
+      }).join('');
+      return '<div class="oc-flow"><div class="oc-flow-cancer">'+esc(s.cancer)+'</div><div class="oc-steps">'+steps+'</div></div>';
+    }).join('');
+    var combo=COMBO.map(function(c){
+      return '<div class="oc-flow"><div class="oc-flow-cancer">'+esc(c[0])+'</div><div class="oc-steps">'
+        +'<span class="oc-step"><b>'+esc(c[1])+'</b><i>'+esc(c[2])+'</i></span>'
+        +'<span class="oc-plus">+</span>'
+        +'<span class="oc-step"><b>'+esc(c[3])+'</b><i>'+esc(c[4])+'</i></span></div></div>';
+    }).join('');
+    return '<div class="oc-body">'
+      +'<div class="oc-concept" style="margin:0 0 4px">서로 다른 <b>약물종류</b>로 순차·병용 치료하는 대표 사례입니다. 약물종류가 바뀔수록 보장이 쌓이는 <b>복층 보장</b>의 근거가 됩니다.</div>'
+      +'<div class="oc-sec"><div class="oc-sec-t">🔁 내성·변이 시 다른 종류로 순차 변경</div>'+seq+'</div>'
+      +'<div class="oc-sec"><div class="oc-sec-t">➕ 병용요법 (서로 다른 종류 2개 이상 병용)</div>'+combo+'</div>'
+      +'</div>';
+  }
+  function nonbenHtml(){
+    var rows=NONBEN.map(function(r){return '<tr><td>'+esc(r[0])+'</td><td><b>'+esc(r[1])+'</b></td><td>'+esc(r[2])+'</td></tr>';}).join('');
+    return '<div class="oc-body">'
+      +'<div class="oc-sec-t" style="margin-top:8px">💊 대표 비급여 표적항암제 <span style="font-weight:600;color:var(--muted);font-size:12px">(\u201826.2월 기준)</span></div>'
+      +'<table class="oc-tbl"><thead><tr><th>암종</th><th>표적항암제</th><th>약물종류</th></tr></thead><tbody>'+rows+'</tbody></table>'
+      +'<div class="oc-note"><b>참고</b> · 급여 등재된 표적항암제라도 급여 인정 기준을 벗어나 사용하면 전액본인부담이 적용되어 환자 부담 비용이 커질 수 있습니다.</div>'
+      +'</div>';
+  }
+  function rltHtml(){
+    return '<div class="oc-body">'
+      +'<div class="oc-warn"><span class="lbl">[주의]</span> 방사성 리간드 약제는 표적/면역항암제가 아닌 리간드 약제로, <b>항암방사선치료비</b>에서 보상·지급됩니다.</div>'
+      +'<div class="oc-sec">'
+      +'<span class="oc-rlt-badge">표적·면역항암제 분류 외 별도 카테고리</span>'
+      +'<div class="oc-mech" style="margin-top:6px">방사성 리간드 치료(RLT)는 암세포 표면 항원(예: PSMA)에 특이적으로 결합하는 리간드에 방사성 동위원소를 결합해, 방사선을 암세포에 직접 전달하는 정밀 치료입니다. 대부분 <b style="color:var(--red)">고액 비급여</b>로 시행됩니다.</div>'
+      +'<div class="oc-rlt"><div class="oc-rlt-name">플루빅토 (Pluvicto)</div>'
+      +'<div class="oc-rlt-sub">국내 대표 전립선암 표적 방사성 리간드 치료제</div>'
+      +'<dl class="oc-kv">'
+      +'<dt>성분</dt><dd>루테튬(<sup>177</sup>Lu) 비피보타이드테트라세탄</dd>'
+      +'<dt>제조</dt><dd>노바티스</dd>'
+      +'<dt>적응증</dt><dd>PSMA 양성 전이성 거세저항성 전립선암(mCRPC) — 안드로겐 수용체 경로 차단(ARPI) 및 탁산 기반 화학요법 이후 진행한 환자</dd>'
+      +'<dt>작용기전</dt><dd>PSMA-617 리간드가 암세포 표면 PSMA에 결합 → 결합된 Lu-177이 방출하는 β선이 주변 암세포를 선택적으로 파괴</dd>'
+      +'<dt>투여</dt><dd>정맥주사 · 약 6주 간격 최대 6회</dd>'
+      +'<dt>국내</dt><dd>2024년 5월 식약처 허가 · 고액 비급여</dd>'
+      +'</dl></div>'
+      +'<div class="oc-sec-t" style="margin-top:16px">그 외 방사성의약품</div>'
+      +'<div class="oc-rlt-more">'
+      +'<div class="oc-rlt-item"><b>조피고 (라듐-223 염화물, 바이엘)</b> <span>· 내장전이 없는 증상성 골전이 거세저항성 전립선암 · 2014년 국내 허가</span></div>'
+      +'<div class="oc-rlt-item"><b>루타테라 (루테튬 <sup>177</sup>Lu 옥소도트레오타이드, 노바티스)</b> <span>· 위장관·췌장 신경내분비종양(GEP-NET)</span></div>'
+      +'</div>'
+      +'<div class="oc-note" style="margin-top:12px"><b>참고</b> · 정보 제공용 자료이며, 실제 급여·비급여 여부 및 보험금 지급은 약관과 심사 기준에 따릅니다.</div>'
+      +'</div></div>';
+  }
+
+  function tb(id,label){return '<button class="mm-tab'+(tab===id?' on':'')+'" data-t="'+id+'">'+label+'</button>';}
+  function bodyHtml(){
+    return tab==='types'?typesHtml():tab==='therapy'?therapyHtml():tab==='nonben'?nonbenHtml():rltHtml();
+  }
+  function render(){
+    modal.innerHTML='<div class="mm-head"><div><div class="mm-title">🎯 표적항암제 종류 안내</div>'
+      +'<div class="mm-sub">작용기전에 따른 6가지 분류 · 방사성 리간드 약제(별도)</div></div>'
+      +'<button class="x" id="ocx" aria-label="닫기" style="font:inherit;font-size:22px;background:none;border:0;cursor:pointer;color:#8A93A2">\u2715</button></div>'
+      +'<div class="mm-tabs">'+tb('types','표적항암제 6종류')+tb('therapy','병용·순차치료')+tb('nonben','비급여 표적항암제')+tb('rlt','방사성 리간드 \u2605')+'</div>'
+      +bodyHtml();
+    modal.querySelector('#ocx').onclick=close;
+    [].forEach.call(modal.querySelectorAll('.mm-tab'),function(b){b.onclick=function(){tab=b.getAttribute('data-t');render();modal.parentNode.scrollTop=0;};});
+  }
+  function open(){tab='types';render();ov.classList.add('show');document.documentElement.style.overflow='hidden';}
+  function close(){ov.classList.remove('show');document.documentElement.style.overflow='';}
+  document.getElementById('oncoBtn').onclick=open;
+  ov.addEventListener('click',function(e){if(e.target===ov)close();});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&ov.classList.contains('show'))close();});
 })();
 </script>
 
