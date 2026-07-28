@@ -657,6 +657,8 @@
 #mp-toast.err{background:#b91c1c;}
 </style>
 <style id="oncoCss">
+  .feat-row{display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;justify-content:flex-end;margin-left:auto}
+  .feat-row>*{margin-left:0}
   /* ── 표적항암제 종류 버튼 (히스토리·지도와 동일 톤) ── */
   .onco-box{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex:none;position:relative}
   .onco-new{position:absolute;top:-10px;right:-7px;z-index:3;pointer-events:none;
@@ -727,6 +729,7 @@
   .oc-warn b{font-weight:900}
   .oc-warn .lbl{font-size:17.5px;font-weight:900}
   @media(max-width:560px){
+    .feat-row{width:100%;margin-left:0;gap:8px;flex-wrap:nowrap;align-items:stretch}
     .onco-box{flex:1 1 0;width:auto;min-width:0;margin-left:0;align-items:stretch;gap:0}
     .onco-btn{width:100%;flex:1;justify-content:center;text-align:center;padding:11px 8px;font-size:12.5px;gap:5px;line-height:1.32;white-space:normal;word-break:keep-all;box-shadow:0 3px 12px rgba(0,0,0,.2)}
     .onco-cap{display:none}
@@ -752,7 +755,6 @@
         <span class="ver">ver2607</span>
       </div>
       <div class="hist-box">
-        <span class="hist-new">NEW</span>
         <button class="hist-btn" id="histBtn" title="암·순환계·간병·치매 주요 상품 변천사">📜 [상품 히스토리]</button>
         <div class="hist-cap">주요 상품군의 출시일과 개정 이슈를<br>시간대별로 확인할 수 있습니다.</div>
       </div>
@@ -2266,8 +2268,7 @@ function buildRiderPrompt(r){
   /* 버튼 — 상품 히스토리 왼쪽 */
   var box=document.createElement('div');
   box.className='map-box';
-  box.innerHTML='<span class="map-new">NEW</span>'
-    +'<button class="map-btn" id="mapBtn" title="제5기 상급종합병원 및 암중점치료기관 위치">'
+  box.innerHTML='<button class="map-btn" id="mapBtn" title="제5기 상급종합병원 및 암중점치료기관 위치">'
     +'\uD83C\uDFE5 [상급종합 지도]</button>'
     +'<div class="map-cap">상급종합병원 47 · 암중점 16 · 권역심뇌 15 ·<br>권역외상센터 17개소를 확인할 수 있습니다.</div>';
   host.parentNode.insertBefore(box, host);
@@ -2512,6 +2513,14 @@ function buildRiderPrompt(r){
     +'<button class="onco-btn" id="oncoBtn" title="표적항암제 작용기전 6종류 · 방사성 리간드 약제">🎯 [표적항암 종류]</button>'
     +'<div class="onco-cap">표적항암제 6종류(작용기전)와<br>방사성 리간드 약제를 확인할 수 있습니다.</div>';
   host.parentNode.insertBefore(box, anchor);
+
+  /* 세 기능 버튼을 한 줄 묶음으로 정렬 (모바일 조화) */
+  try{
+    var ht=host.parentNode;
+    var row=document.createElement('div'); row.className='feat-row';
+    ['.onco-box','.map-box','.hist-box'].forEach(function(sel){ var el=ht.querySelector(sel); if(el) row.appendChild(el); });
+    ht.appendChild(row);
+  }catch(e){}
 
   var ov=document.createElement('div'); ov.id='oncoov';
   ov.innerHTML='<div class="ocmodal" id="ocmodal"></div>';
