@@ -6,8 +6,8 @@
 <title>상품 라인업 · 메리츠 세일즈혁신</title>
 <style>
   :root{
-    --blue:#1D4ED8; --blue2:#2563EB; --blue3:#3B82F6; --blueDeep:#12307E;
-    --blueSoft:#EFF5FF; --blueLine:#CBDDFB;
+    --blue:#D97706; --blue2:#F59E0B; --blue3:#FBBF24; --blueDeep:#92400E;
+    --blueSoft:#FFFBEB; --blueLine:#FDE68A;
     --meritz:#990011;
     --ink:#1B2333; --sub:#5A6273; --mute:#8A93A5;
     --line:#E7E9EF; --bg:#F7F9FC; --card:#fff;
@@ -42,7 +42,7 @@
   .tabs{display:flex; gap:6px; margin:14px 0 10px}
   .tab{flex:1; text-align:center; padding:11px 8px; border-radius:12px; border:1px solid var(--line);
        background:#fff; font-weight:800; font-size:13.5px; color:var(--sub); cursor:pointer; transition:.15s}
-  .tab.on{background:var(--blue); border-color:var(--blue); color:#fff; box-shadow:0 4px 14px rgba(29,78,216,.28)}
+  .tab.on{background:var(--blue); border-color:var(--blue); color:#fff; box-shadow:0 4px 14px rgba(217,119,6,.28)}
 
   /* ── 검색/필터 ── */
   .ctrl{background:var(--bg); padding:8px 0 10px;
@@ -50,7 +50,7 @@
   .sbox{position:relative}
   .sbox input{width:100%; padding:13px 40px 13px 40px; border:1.5px solid var(--blueLine); border-radius:13px;
        font-size:15px; font-family:inherit; background:#fff; outline:none; transition:.15s}
-  .sbox input:focus{border-color:var(--blue); box-shadow:0 0 0 4px rgba(37,99,235,.12)}
+  .sbox input:focus{border-color:var(--blue); box-shadow:0 0 0 4px rgba(245,158,11,.12)}
   .sbox .ic{position:absolute; left:13px; top:50%; transform:translateY(-50%); font-size:15px; opacity:.5}
   .sbox .cl{position:absolute; right:8px; top:50%; transform:translateY(-50%); border:0; background:#EDF0F5;
        width:26px; height:26px; border-radius:50%; cursor:pointer; color:var(--sub); font-size:14px; display:none}
@@ -63,7 +63,7 @@
         font-size:12.5px; font-weight:700; padding:7px 12px; border-radius:999px; cursor:pointer;
         white-space:nowrap; transition:.13s}
   .chip:active{transform:scale(.96)}
-  .chip.on{background:var(--blue); border-color:var(--blue); color:#fff; box-shadow:0 3px 10px rgba(29,78,216,.25)}
+  .chip.on{background:var(--blue); border-color:var(--blue); color:#fff; box-shadow:0 3px 10px rgba(217,119,6,.25)}
   .chip.on.g2{background:#0E7490; border-color:#0E7490; box-shadow:0 3px 10px rgba(14,116,144,.25)}
   .chip.on.g3{background:#6D28D9; border-color:#6D28D9; box-shadow:0 3px 10px rgba(109,40,217,.22)}
   .chip.on.g4{background:var(--meritz); border-color:var(--meritz); box-shadow:0 3px 10px rgba(153,0,17,.22)}
@@ -85,14 +85,14 @@
   /* ── 상품 카드 ── */
   .p{background:var(--card); border:1px solid var(--line); border-radius:15px; margin-bottom:9px;
      overflow:hidden; transition:box-shadow .18s, border-color .18s}
-  .p.open{border-color:var(--blueLine); box-shadow:0 8px 26px rgba(29,78,216,.10)}
+  .p.open{border-color:var(--blueLine); box-shadow:0 8px 26px rgba(217,119,6,.10)}
   .ph{display:flex; align-items:flex-start; gap:10px; padding:14px 14px; cursor:pointer; position:relative}
   .ph:hover{background:#FAFCFF}
   .pn{flex:1; min-width:0}
   .pn h3{margin:0 0 6px; font-size:15px; font-weight:800; letter-spacing:-.02em; line-height:1.4}
   .pmeta{display:flex; flex-wrap:wrap; gap:5px}
   .b{font-size:10.5px; font-weight:800; padding:3px 8px; border-radius:6px; background:#F1F4F9; color:#4A5568; white-space:nowrap}
-  .b.age{background:#EFF5FF; color:var(--blue)}
+  .b.age{background:#FFFBEB; color:var(--blue)}
   .b.gp{background:#E7F6F8; color:#0E7490}
   .b.std{background:#ECFDF5; color:#047857}
   .b.easy{background:#FEF3C7; color:#92400E}
@@ -160,7 +160,7 @@
         font-size:11px; color:var(--mute); line-height:1.75; text-align:center}
   .top{position:fixed; right:14px; bottom:14px; width:44px; height:44px; border-radius:50%; border:0;
        background:var(--blue); color:#fff; font-size:17px; cursor:pointer; display:none; z-index:30;
-       box-shadow:0 8px 22px rgba(29,78,216,.4)}
+       box-shadow:0 8px 22px rgba(217,119,6,.4)}
   .top.on{display:block}
   @media(max-width:560px){ .hd h1{font-size:19px} .tata{width:56px; height:72px} }
 </style>
