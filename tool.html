@@ -2727,6 +2727,12 @@ function buildRiderPrompt(r){
     +'.sc-box--flex{flex:1 1 0 !important;width:auto !important;min-width:0 !important;align-items:stretch !important;gap:4px}'
     +'.sc-box--flex .sc-btn{width:100%;justify-content:center;padding-left:10px;padding-right:10px}'
     +'.sc-box--flex .sc-cap{text-align:center}'
+    +'.sc-search{width:100%;box-sizing:border-box;font-size:15px;font-family:inherit;padding:12px 14px;border:2px solid #CFEDE7;border-radius:12px;outline:none;margin-bottom:12px;color:#16243D;-webkit-appearance:none}'
+    +'.sc-search:focus{border-color:#0B7C6F;box-shadow:0 0 0 3px rgba(11,124,111,.12)}'
+    +'.sc-hint{font-size:12.5px;color:#6B7688;background:#F7F8FA;border-radius:10px;padding:12px 14px;line-height:1.6}'
+    +'.sc-rescount{font-size:12.5px;font-weight:800;color:#0B7C6F;margin:2px 0 12px;background:#F1FAF8;border:1px solid #CFEDE7;border-radius:10px;padding:9px 12px}'
+    +'.sc-mk{background:#FDE68A;color:#7A4E00;border-radius:3px;padding:0 1px}'
+    +'.sc-res .sc-ov-h{margin-top:14px}'
     +'@media(max-width:560px){'
     +'.scmodal{width:100%;max-height:94vh;border-radius:14px}.sc-ov-k{min-width:96px}'
     +'.sc-tbl{font-size:11.5px}.sc-tbl th,.sc-tbl td{padding:6px 6px}'
@@ -2846,7 +2852,63 @@ function buildRiderPrompt(r){
     return h;
   }
 
-  var TABS=[['ov','① 개요·기준 비교'],['cross','② 신체계통 교차'],['lap','③ 겹침·비겹침'],['det','④ 1-5종 상세'],['det17','⑤ 1-7종 상세'],['det131','⑥ 131대 상세']];
+  /* ---------- 🔎 통합검색 (자동완성) ---------- */
+  var _scIdx=null,_scSug=null;
+  function scIndex(){
+    if(_scIdx) return _scIdx;
+    var a=[];
+    SC.d17.forEach(function(r){ a.push({tag:'①',name:r.name,jong:r.jong,code:r.code,sys:r.sys,desc:r.desc,hay:(r.name+' '+r.sys+' '+r.code+' '+r.desc).toLowerCase()}); });
+    SC.d131.forEach(function(r){ a.push({tag:'②',dis:r.dis,kcd:r.kcd,grp:r.grp,sys:r.sys,hay:(r.dis+' '+r.kcd+' '+r.sys+' '+r.grp+' '+short131(r.grp)).toLowerCase()}); });
+    SC.detail.forEach(function(r){ a.push({tag:'③',name:r[2],jong:r[3],sys:r[0],remark:r[4],hay:(r[2]+' '+r[0]+' '+r[4]).toLowerCase()}); });
+    _scIdx=a; return a;
+  }
+  function scSuggest(){
+    if(_scSug) return _scSug;
+    var set={};
+    SC.d17.forEach(function(r){ set[r.sys]=1; });
+    SC.d131.forEach(function(r){ set[r.sys]=1; set[short131(r.grp)]=1; });
+    SC.detail.forEach(function(r){ set[r[0]]=1; });
+    ['심장','뇌','뇌혈관','갑상선','부갑상선','위','대장','소장','직장','간','담낭','담도','췌장','신장','방광','요관','요도','전립선','고환','자궁','난소','난관','유방','백내장','녹내장','망막','각막','안구','고막','중이','편도','폐','기관지','식도','척추','추간판','관절','디스크','치핵','치루','탈장','충수','부신','뇌하수체','림프','비장','피부','정맥류','제왕절개','골절','인대','연골','이식','내시경'].forEach(function(k){ set[k]=1; });
+    _scSug=Object.keys(set).filter(Boolean).sort(); return _scSug;
+  }
+  function scDatalist(){ return '<datalist id="scDL">'+scSuggest().map(function(s){ return '<option value="'+esc(s)+'">'; }).join('')+'</datalist>'; }
+  function scHl(s,toks){ var out=esc(s); toks.forEach(function(t){ if(!t) return; var et=esc(t).replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); out=out.replace(new RegExp('('+et+')','gi'),'<mark class="sc-mk">$1</mark>'); }); return out; }
+  function scBlock(title,arr,headers,rowFn){
+    if(!arr.length) return '';
+    var cap=60,more=arr.length>cap?arr.length-cap:0,list=arr.slice(0,cap);
+    var h='<div class="sc-ov-h">'+title+' · '+arr.length+'건</div>';
+    h+='<div class="sc-scroll"><table class="sc-tbl"><thead><tr>';
+    headers.forEach(function(x){ h+='<th'+(x.w?' style="width:'+x.w+'"':'')+'>'+esc(x.t)+'</th>'; });
+    h+='</tr></thead><tbody>';
+    list.forEach(function(it){ h+='<tr>'+rowFn(it)+'</tr>'; });
+    h+='</tbody></table></div>';
+    if(more) h+='<div class="sc-hint" style="margin-top:6px">외 '+more+'건 더 있음 — 검색어를 더 구체적으로 입력하면 좁혀집니다.</div>';
+    return h;
+  }
+  function searchResults(q){
+    q=(q||'').trim();
+    if(!q) return '<div class="sc-hint"><b>신체부위·질병·수술명</b>을 입력하세요. 예: <b>심장 · 갑상선 · 백내장 · 뇌 · 위 · 자궁 · 척추 · 치핵</b><br>3개 특약(①1-7종 · ②131대 · ③1-5종Ⅱ)에서 관련 항목을 한 번에 찾아 보여줍니다.</div>';
+    var toks=q.toLowerCase().split(/\s+/).filter(Boolean);
+    var idx=scIndex(),g1=[],g2=[],g3=[];
+    idx.forEach(function(it){ if(toks.every(function(t){return it.hay.indexOf(t)>=0;})){ if(it.tag==='①')g1.push(it); else if(it.tag==='②')g2.push(it); else g3.push(it); } });
+    var total=g1.length+g2.length+g3.length;
+    if(!total) return '<div class="sc-hint">‘'+esc(q)+'’ 관련 항목을 찾지 못했습니다. 더 일반적인 단어(예: 심장, 신장, 안과, 소화기)로 검색해 보세요.</div>';
+    var h='<div class="sc-rescount">총 '+total+'건 — ① 1-7종 '+g1.length+' · ② 131대 '+g2.length+' · ③ 1-5종Ⅱ '+g3.length+'</div>';
+    h+=scBlock('① 1-7종 (별표3·급여수술)',g1,[{t:'수술명'},{t:'종·코드',w:'104px'},{t:'계통',w:'112px'}],function(it){ return '<td style="font-weight:700;color:#16243D">'+scHl(it.name,toks)+'</td><td style="text-align:center;white-space:nowrap;color:#1F5FB0;font-weight:800">'+esc(it.jong)+' · '+esc(it.code)+'</td><td style="color:#46536B">'+scHl(it.sys,toks)+'</td>'; });
+    h+=scBlock('② 131대 (질병코드·수술 시 지급)',g2,[{t:'대상질병'},{t:'질병코드',w:'92px'},{t:'보장군·계통',w:'150px'}],function(it){ return '<td style="font-weight:600;color:#16243D">'+scHl(it.dis,toks)+'</td><td style="text-align:center;white-space:nowrap;color:#B4520A;font-weight:700">'+esc(it.kcd)+'</td><td style="color:#46536B;font-size:11.5px">'+esc(short131(it.grp))+' / '+scHl(it.sys,toks)+'</td>'; });
+    h+=scBlock('③ 1-5종Ⅱ (별표76·급여·비급여 무관)',g3,[{t:'수술명'},{t:'종',w:'46px'},{t:'계통',w:'92px'},{t:'비고'}],function(it){ return '<td style="font-weight:700;color:#16243D">'+scHl(it.name,toks)+'</td><td style="text-align:center;font-weight:800;color:#0B7C6F">'+esc(it.jong)+'</td><td style="color:#46536B">'+scHl(it.sys,toks)+'</td><td style="color:#6B7688;font-size:11.5px">'+esc(it.remark)+'</td>'; });
+    h+='<div class="sc-note">※ 동일 수술이라도 특약별 지급조건·등급이 다를 수 있습니다. 실제 지급 여부는 약관·담보구성으로 확인하세요.</div>';
+    return h;
+  }
+  function renderSearch(){
+    var h='<div class="sc-lead"><b>신체부위·질병·수술명</b>을 입력하면 <b>3개 특약(①1-7종 · ②131대 · ③1-5종Ⅱ)</b>에서 관련 항목을 한 번에 찾아줍니다. 입력창을 누르면 <b>자동완성</b> 추천이 뜹니다.</div>';
+    h+='<input id="scq" class="sc-search" type="search" list="scDL" autocomplete="off" placeholder="🔎 신체부위·질병·수술 입력 (예: 심장, 백내장, 갑상선)">';
+    h+=scDatalist();
+    h+='<div id="scRes" class="sc-res"></div>';
+    return h;
+  }
+
+  var TABS=[['search','🔎 검색'],['ov','① 개요·기준 비교'],['cross','② 신체계통 교차'],['lap','③ 겹침·비겹침'],['det','④ 1-5종 상세'],['det17','⑤ 1-7종 상세'],['det131','⑥ 131대 상세']];
 
   /* ---------- 모달 마운트 ---------- */
   function mount(doc, anchorFn, capDark, flexBox){
@@ -2863,9 +2925,10 @@ function buildRiderPrompt(r){
     ov.innerHTML='<div class="scmodal" id="scmodal"></div>';
     doc.body.appendChild(ov);
     var modal=ov.querySelector('#scmodal');
-    var tab='ov', detG=null;
+    var tab='search', detG=null;
 
     function bodyHtml(){
+      if(tab==='search') return renderSearch();
       if(tab==='ov') return renderOverview();
       if(tab==='cross') return renderCross();
       if(tab==='lap') return renderOverlap();
@@ -2890,6 +2953,10 @@ function buildRiderPrompt(r){
         modal.querySelectorAll('.sc-fbtn').forEach(function(b){
           b.onclick=function(){ var g=b.getAttribute('data-g'); detG=(g==='__all')?null:g; render(); };
         });
+      }
+      if(tab==='search'){
+        var _q=modal.querySelector('#scq'), _res=modal.querySelector('#scRes');
+        if(_q&&_res){ var _upd=function(){ _res.innerHTML=searchResults(_q.value); }; _q.addEventListener('input',_upd); _upd(); setTimeout(function(){ try{_q.focus();}catch(e){} },30); }
       }
     }
     function open(){ render(); ov.classList.add('show'); }
