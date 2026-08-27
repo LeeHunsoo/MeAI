@@ -181,6 +181,81 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   .footer-note b{color:#6d6459}
   .warn-note{color:#D8232A;font-weight:700;font-size:12.5px;margin:12px 0 0;line-height:1.5}
 
+  /* ═══════════════ 폼텍 라벨 모드 ═══════════════ */
+  .modewrap{margin:0 0 18px 30px}
+  .seg.big button{padding:11px 20px;font-size:13.5px}
+  .fmtbox{margin:16px 0 0 30px;padding:16px 18px;border:1px solid var(--line);border-radius:13px;background:#fbfaf8}
+  .fmtbox h3{margin:0 0 4px;font-size:12.5px;font-weight:800;color:var(--ink)}
+  .fmtbox .sub{margin:0 0 13px;font-size:12px;color:var(--ink-soft);line-height:1.6}
+  .fmtgrid{display:flex;flex-wrap:wrap;gap:14px 22px;align-items:flex-end}
+  .fmtf{display:flex;flex-direction:column;gap:6px}
+  .fmtf>span{font-size:11.5px;font-weight:700;color:var(--ink-soft)}
+  .fmtf input.num{font-family:inherit;font-size:13px;padding:8px 10px;border:1px solid var(--line);border-radius:9px;width:84px;background:#fff;color:var(--ink)}
+  .fmtf select.big{min-width:280px}
+  .specline{margin:13px 0 0;font-size:12.5px;font-weight:600;color:var(--ink-soft);line-height:1.7;
+    background:#fff;border:1px solid var(--line);border-radius:10px;padding:11px 14px}
+  .specline b{color:var(--meritz)}
+  .specline .warnfit{color:#D8232A}
+  .fmttip{margin:11px 0 0;font-size:12px;color:#8b8175;line-height:1.6}
+  .fmttip b{color:#6d6459}
+
+  .sheetwrap{margin-top:10px}
+  .lsheetbox{margin:0 auto 22px;position:relative}
+  .lsheet{position:relative;width:210mm;height:297mm;background:#fff;
+    box-shadow:0 8px 26px rgba(20,18,13,.14);transform-origin:top left;overflow:hidden}
+  .lsheet .sheetno{position:absolute;top:2mm;right:3mm;font-size:2.6mm;color:#c4bfb6;font-weight:700;z-index:9}
+  .lcell{position:absolute;overflow:hidden;display:block}
+  .lcell.guide{outline:0.28mm dashed #d3cfc7;outline-offset:-0.14mm}
+  .lcell .ldel{position:absolute;top:1mm;right:1mm;z-index:6;width:5mm;height:5mm;border-radius:50%;border:0;
+    background:rgba(20,18,13,.5);color:#fff;font-size:2.7mm;line-height:1;cursor:pointer;display:none;padding:0}
+  .lcell:hover .ldel{display:block}
+
+  .lplate{position:relative;width:100%;height:100%;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;text-align:center;overflow:hidden;isolation:isolate}
+  .lplate.light{background:linear-gradient(150deg,#ffffff 0%,#fbf7f0 46%,#f1e8d7 100%);color:var(--ink)}
+  .lplate.dark{background:radial-gradient(135% 165% at 50% -5%,#37302a 0%,#1c1712 55%,#110e0b 100%);color:#f7f2ea}
+  .lplate.plain{background:#fff;color:var(--ink)}
+  .lplate .lglow{position:absolute;inset:0;z-index:0;pointer-events:none}
+  .lplate.light .lglow{background:radial-gradient(60% 42% at 50% -8%,rgba(245,69,30,.13),transparent 70%)}
+  .lplate.dark  .lglow{background:radial-gradient(64% 46% at 50% -6%,rgba(245,69,30,.28),transparent 68%)}
+  .lplate.plain .lglow{background:none}
+  .lplate .lframe{position:absolute;z-index:1;pointer-events:none;border-radius:1mm}
+  .lplate.light .lframe{border:0.2mm solid rgba(22,18,13,.16)}
+  .lplate.dark  .lframe{border:0.2mm solid rgba(255,255,255,.17)}
+  .lplate.plain .lframe{border:0.2mm solid rgba(22,18,13,.16)}
+  .lplate .lcorner{position:absolute;z-index:2;pointer-events:none}
+  .lplate .lcorner i{position:absolute;background:var(--plate)}
+  .lplate .lcorner .h{width:100%;top:0}
+  .lplate .lcorner .v{height:100%;left:0}
+
+  .lplate .lbody{position:relative;z-index:3;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .lplate .lev{font-family:var(--sans);font-weight:700;letter-spacing:.24em;text-transform:uppercase;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;line-height:1.2}
+  .lplate.light .lev{color:#8a5140}
+  .lplate.dark  .lev{color:#f0b8a6}
+  .lplate.plain .lev{color:#8a5140}
+  .lplate .lname{font-family:var(--serif);font-weight:900;letter-spacing:-.015em;line-height:1.02;margin:0;white-space:nowrap}
+  .lplate .lfl{display:flex;align-items:center;justify-content:center}
+  .lplate .lfl .fl{background:linear-gradient(90deg,transparent,var(--plate))}
+  .lplate .lfl .fl.r{background:linear-gradient(90deg,var(--plate),transparent)}
+  .lplate .lfl .d{background:var(--plate);transform:rotate(45deg)}
+  .lplate .laf{font-family:var(--sans);font-weight:600;line-height:1.25;margin:0;white-space:nowrap;
+    overflow:hidden;text-overflow:ellipsis;max-width:100%}
+  .lplate.light .laf{color:#4a423a}
+  .lplate.dark  .laf{color:#d8cfc4}
+  .lplate.plain .laf{color:#4a423a}
+  .lplate .lex{font-family:var(--sans);font-weight:500;letter-spacing:.02em;margin:0;white-space:nowrap;
+    overflow:hidden;text-overflow:ellipsis;max-width:100%}
+  .lplate.light .lex{color:#8b8175}
+  .lplate.dark  .lex{color:#a99f92}
+  .lplate.plain .lex{color:#8b8175}
+  .lplate .lwm{font-family:var(--sans);font-weight:900;letter-spacing:-.01em;white-space:nowrap}
+  .lplate .lwm .a{color:var(--plate);margin-right:.22em}
+  .lplate.light .lwm .b{color:#2a2019}
+  .lplate.dark  .lwm .b{color:#efe8de}
+  .lplate.plain .lwm .b{color:#2a2019}
+  .lplate .lwm img{width:auto;object-fit:contain;display:block}
+
   @media print{
     @page{size:A4 portrait;margin:5mm}
     .chrome{padding:0;max-width:none}
@@ -189,8 +264,18 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     .page{width:150mm;height:70mm;margin:0 auto 1.5mm;display:flex;align-items:center;justify-content:center;page-break-inside:avoid;break-inside:avoid}
     .plate{width:150mm;height:70mm;border-radius:0;box-shadow:none !important;outline:var(--cutborder)}
     .plate .del{display:none !important}
+
+    /* 폼텍 라벨 모드 인쇄 */
+    .sheetwrap{margin:0}
+    .lsheetbox{height:auto !important;margin:0 !important;page-break-after:always;break-after:page}
+    .lsheetbox:last-child{page-break-after:auto;break-after:auto}
+    .lsheet{transform:none !important;box-shadow:none !important;width:210mm;height:296.9mm;margin:0}
+    .lsheet .sheetno{display:none !important}
+    .lcell .ldel{display:none !important}
+    .lplate{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   }
 </style>
+<style id="pagestyle"></style>
 </head>
 <body>
 <div class="chrome">
@@ -201,7 +286,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     <h1>명패 제작기</h1>
     <span class="sub">메리츠화재 · 엑셀 한 장이면 끝</span>
   </header>
-  <p class="lead no-print">이름·소속이 담긴 엑셀을 올리면 프리미엄 명패가 한 번에 만들어집니다. 규격은 표준 아크릴 명패(<b>가로 150mm × 세로 70mm</b>)에 맞췄고, 용지를 아끼도록 <b>A4 한 장에 최대 4개씩</b> 촘촘히 인쇄돼요.</p>
+  <p class="lead no-print">이름·소속이 담긴 엑셀을 올리면 프리미엄 명패가 한 번에 만들어집니다. <b>삼각대 명패(150×70mm)</b>는 그대로 쓰시고, 필요하면 <b>폼텍 라벨 스티커</b> 규격으로 바꿔 이름표·좌석표·명찰로도 바로 뽑을 수 있어요.</p>
 
   <!-- STEP 1 -->
   <section class="panel no-print">
@@ -226,6 +311,14 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   <section class="panel no-print" id="mapPanel" style="display:none">
     <h2><span class="step">2</span>행사명 · 테마 · 항목</h2>
     <p class="hint">행사명은 명패 정중앙 상단에 들어갑니다. 비워두면 표시되지 않아요.</p>
+
+    <div class="modewrap">
+      <span class="lbl" style="display:block;font-size:12.5px;color:var(--ink-soft);font-weight:700;margin-bottom:7px">출력 방식</span>
+      <div class="seg big" id="modeSeg">
+        <button data-m="plate" class="on">🪧 삼각대 명패 150×70</button>
+        <button data-m="label">🏷 폼텍 라벨 스티커</button>
+      </div>
+    </div>
 
     <div class="field">
       <span class="lbl">행사명 (정중앙 상단)</span>
@@ -260,8 +353,8 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         </div>
       </div>
       <div class="opt">
-        <span>재단선</span>
-        <label class="check"><input type="checkbox" id="cut" checked> 자르는 선 표시</label>
+        <span id="cutTitle">재단선</span>
+        <label class="check"><input type="checkbox" id="cut" checked> <span id="cutText">자르는 선 표시</span></label>
       </div>
       <div class="opt">
         <span>정렬 (가나다순)</span>
@@ -272,6 +365,39 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           <button data-s="extra">기타</button>
         </div>
       </div>
+    </div>
+
+    <div class="fmtbox no-print" id="fmtBox" style="display:none">
+      <h3>🏷 폼텍 라벨 규격</h3>
+      <p class="sub">쓰시는 <b>폼텍 라벨 스티커 제품번호</b>를 고르면 가로·세로 칸 배치가 자동으로 잡힙니다. 목록에 없으면 <b>직접 입력</b>을 골라 실측값을 넣으세요.</p>
+
+      <div class="fmtgrid">
+        <div class="fmtf">
+          <span>제품 선택</span>
+          <select id="fmtPreset" class="big"></select>
+        </div>
+        <div class="fmtf" id="wrapW" style="display:none"><span>라벨 가로(mm)</span><input class="num" type="number" id="fmtW" step="0.1" min="10" value="99.1"></div>
+        <div class="fmtf" id="wrapH" style="display:none"><span>라벨 세로(mm)</span><input class="num" type="number" id="fmtH" step="0.1" min="8" value="67.7"></div>
+        <div class="fmtf" id="wrapC" style="display:none"><span>가로 칸 수(열)</span><input class="num" type="number" id="fmtC" step="1" min="1" max="12" value="2"></div>
+        <div class="fmtf" id="wrapR" style="display:none"><span>세로 칸 수(행)</span><input class="num" type="number" id="fmtR" step="1" min="1" max="40" value="4"></div>
+      </div>
+
+      <div class="fmtgrid" style="margin-top:14px">
+        <div class="fmtf"><span>가로 간격(mm)</span><input class="num" type="number" id="fmtHG" step="0.1" min="0" value="2.5"></div>
+        <div class="fmtf"><span>세로 간격(mm)</span><input class="num" type="number" id="fmtVG" step="0.1" min="0" value="0"></div>
+        <div class="fmtf"><span>← → 미세조정(mm)</span><input class="num" type="number" id="fmtOX" step="0.5" value="0"></div>
+        <div class="fmtf"><span>↑ ↓ 미세조정(mm)</span><input class="num" type="number" id="fmtOY" step="0.5" value="0"></div>
+        <div class="fmtf"><span>시작 칸 번호</span><input class="num" type="number" id="fmtStart" step="1" min="1" value="1"></div>
+        <div class="fmtf">
+          <span>배경</span>
+          <label class="check" style="height:35px"><input type="checkbox" id="fmtPlain"> 흰 바탕(잉크 절약)</label>
+        </div>
+      </div>
+
+      <div class="specline" id="fmtSpec"></div>
+      <p class="fmttip">· <b>시작 칸 번호</b>를 쓰면 이미 몇 칸 떼어 쓴 라벨지도 남은 칸부터 이어서 인쇄할 수 있어요. (왼쪽 위 1번 → 오른쪽 순서)<br>
+      · 첫 인쇄는 <b>일반 A4에 시험 출력</b> 후 라벨지에 겹쳐보고, 어긋나면 위 <b>미세조정</b> 값으로 밀어주세요.<br>
+      · 인쇄창에서 반드시 <b>여백 '없음'</b>, <b>배율 100%(페이지에 맞춤 끄기)</b>로 두셔야 칸이 맞습니다.</p>
     </div>
 
     <p class="hint" style="margin-top:18px">엑셀의 어떤 칸을 이름·소속·기타로 쓸지 자동으로 맞춰뒀어요. 다르면 바꿔주세요.</p>
@@ -287,7 +413,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   <!-- STEP 3 -->
   <section class="panel no-print" id="printPanel" style="display:none">
     <h2><span class="step">3</span>인쇄하기</h2>
-    <p class="hint">아래 미리보기가 그대로 인쇄됩니다. A4 세로 한 장에 명패가 4개씩 채워져요. 인쇄창에서 <b>대상을 'PDF로 저장'</b>으로 바꾸면 파일로도 받을 수 있어요.</p>
+    <p class="hint" id="printHint">아래 미리보기가 그대로 인쇄됩니다. A4 세로 한 장에 명패가 4개씩 채워져요. 인쇄창에서 <b>대상을 'PDF로 저장'</b>으로 바꾸면 파일로도 받을 수 있어요.</p>
     <div class="row"><button class="btn btn-big" id="print">🖨 인쇄 / PDF로 저장</button></div>
   </section>
 
@@ -295,15 +421,16 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     <div class="demo-note no-print" id="demoNote" style="display:none"><span class="cd"></span>지금은 <b>예시 데이터</b>로 미리보기 중이에요. 위에서 실제 엑셀을 올리면 이 명단으로 바뀝니다.</div>
     <div class="empty no-print" id="empty">아직 올린 엑셀이 없어요. 위에서 파일을 선택하면 여기에 명패 미리보기가 나타납니다.</div>
     <div class="plates" id="plates"></div>
+    <div class="sheetwrap" id="sheetwrap" style="display:none"><div id="sheets"></div></div>
   </div>
 
-  <p class="footer-note no-print">인쇄 팁 · 인쇄창에서 <b>여백 '없음(또는 최소)'</b>, <b>배율 100%</b>, <b>'배경 그래픽' 켜기</b>로 두면 색과 명암이 제대로 나옵니다. 규격 150×70mm, A4 세로 한 장당 4개.</p>
+  <p class="footer-note no-print" id="footNote">인쇄 팁 · 인쇄창에서 <b>여백 '없음(또는 최소)'</b>, <b>배율 100%</b>, <b>'배경 그래픽' 켜기</b>로 두면 색과 명암이 제대로 나옵니다. 규격 150×70mm, A4 세로 한 장당 4개.</p>
 </div>
 
 <script>
 "use strict";
 const $ = s => document.querySelector(s);
-let rows=[], headers=[], logoDataUrl=null, theme="light", visibleRef=[], isSample=true, sortBy="none";
+let rows=[], headers=[], logoDataUrl=null, theme="light", visibleRef=[], isSample=true, sortBy="none", mode="plate";
 const PRESETS=["서울중앙본부 보험스쿨","세일즈혁신TF 워크샵","2035.12 본부장워크샵","고능률자 간담회","TA업무실장 아트페어"];
 
 /* 행사명 칩 */
@@ -357,7 +484,7 @@ $("#logo").addEventListener("change",e=>{const f=e.target.files[0];if(!f)return;
 $("#logoClear").addEventListener("click",()=>{logoDataUrl=null;$("#logo").value="";$("#logoClear").style.display="none";render();});
 
 /* 재단선 */
-$("#cut").addEventListener("change",()=>{document.documentElement.style.setProperty("--cutborder",$("#cut").checked?"1px dashed #cfcbc4":"none");});
+$("#cut").addEventListener("change",()=>{document.documentElement.style.setProperty("--cutborder",$("#cut").checked?"1px dashed #cfcbc4":"none");if(mode==="label")render();});
 
 /* 유틸 */
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
@@ -394,9 +521,17 @@ function render(){
     const key = sortBy==="name"?kN : sortBy==="affil"?kA : kE;
     if(key) visibleRef.sort((a,b)=>String(a[key]||"").localeCompare(String(b[key]||""),"ko",{numeric:true}));
   }
-  $("#plates").innerHTML=visibleRef.map(r=>plateHTML(r,kN,kA,kE,eyebrow)).join("");
-  const n=visibleRef.length, pages=Math.ceil(n/3);
-  $("#countline").innerHTML=`현재 <b>${n}개</b>의 명패가 준비됐어요. 인쇄하면 A4 <b>${pages}장</b>(한 장에 최대 3개).`+(n?` · 마우스를 올리면 ✕로 하나씩 뺄 수 있어요`:"");
+  const n=visibleRef.length;
+
+  if(mode==="label"){
+    $("#plates").innerHTML="";
+    renderLabels(kN,kA,kE,ev);
+  }else{
+    $("#sheets").innerHTML="";
+    $("#plates").innerHTML=visibleRef.map(r=>plateHTML(r,kN,kA,kE,eyebrow)).join("");
+    const pages=Math.ceil(n/3);
+    $("#countline").innerHTML=`현재 <b>${n}개</b>의 명패가 준비됐어요. 인쇄하면 A4 <b>${pages}장</b>(한 장에 최대 3개).`+(n?` · 마우스를 올리면 ✕로 하나씩 뺄 수 있어요`:"");
+  }
   $("#empty").style.display=n?"none":"block";
   if(n===0)$("#empty").textContent="이름이 비어 있어 표시할 명패가 없어요. 항목 연결에서 '이름'을 확인해주세요.";
 }
@@ -406,6 +541,256 @@ $("#plates").addEventListener("click",e=>{const btn=e.target.closest(".del");if(
 
 /* 인쇄 */
 $("#print").addEventListener("click",()=>{if(visibleRef.length>300&&!confirm(`명패 ${visibleRef.length}개를 인쇄/PDF로 만듭니다.\n수가 많으면 시간이 걸릴 수 있어요. 계속할까요?`))return;window.print();});
+
+/* ═══════════════════════════════════════════════
+   폼텍 라벨 모드 엔진
+   ═══════════════════════════════════════════════ */
+
+/* 폼텍 A4 라벨 규격표 (제품번호 · 한 칸 크기 · 열 × 행 · 기본 가로/세로 간격) */
+const FORMTEC=[
+ {g:"명찰·이름표 추천 규격", list:[
+  {id:"3116", n:"LS-3116", w:99.1, h:93.1, c:2, r:3,  hg:2.5, vg:0,   memo:"6칸 · 큼직한 명찰"},
+  {id:"3114", n:"LS-3114", w:99.1, h:67.7, c:2, r:4,  hg:2.5, vg:0,   memo:"8칸 · 가장 무난"},
+  {id:"3112", n:"LS-3112", w:63.5, h:70,   c:3, r:4,  hg:2.5, vg:0,   memo:"12칸 · 세로형"},
+  {id:"3212", n:"LS-3212", w:100,  h:45,   c:2, r:6,  hg:2.5, vg:0,   memo:"12칸 · 가로 긴형"},
+  {id:"3218", n:"LS-3218", w:63.5, h:45,   c:3, r:6,  hg:2.5, vg:0,   memo:"18칸"},
+ ]},
+ {g:"큰 라벨", list:[
+  {id:"3130", n:"LS-3130", w:210,  h:297,  c:1, r:1,  hg:0,   vg:0,   memo:"1칸 · A4 통짜"},
+  {id:"3120", n:"LS-3120", w:200,  h:140,  c:1, r:2,  hg:0,   vg:0,   memo:"2칸"},
+  {id:"3203", n:"LS-3203", w:200,  h:93,   c:1, r:3,  hg:0,   vg:0,   memo:"3칸"},
+  {id:"3118", n:"LS-3118", w:99.1, h:140,  c:2, r:2,  hg:2.5, vg:0,   memo:"4칸 · 세로형"},
+  {id:"3626", n:"LS-3626", w:160,  h:60,   c:1, r:4,  hg:0,   vg:0,   memo:"4칸 · 화일인덱스"},
+ ]},
+ {g:"주소·분류용 라벨", list:[
+  {id:"3510", n:"LS-3510", w:88.9, h:52,   c:2, r:5,  hg:2.5, vg:0,   memo:"10칸"},
+  {id:"3108", n:"LS-3108", w:99.1, h:38.1, c:2, r:7,  hg:2.5, vg:0,   memo:"14칸"},
+  {id:"3107", n:"LS-3107", w:99.1, h:33.9, c:2, r:8,  hg:2.5, vg:0,   memo:"16칸"},
+  {id:"3109", n:"LS-3109", w:100,  h:30,   c:2, r:9,  hg:2.5, vg:0,   memo:"18칸"},
+  {id:"3105", n:"LS-3105", w:63.5, h:38.1, c:3, r:7,  hg:2.5, vg:0,   memo:"21칸 · 가장 흔함"},
+  {id:"3106", n:"LS-3106", w:64,   h:34,   c:3, r:8,  hg:2.5, vg:0,   memo:"24칸"},
+  {id:"3104", n:"LS-3104", w:62.7, h:30.1, c:3, r:9,  hg:2.5, vg:0,   memo:"27칸"},
+ ]},
+ {g:"작은 라벨", list:[
+  {id:"3102", n:"LS-3102", w:47,   h:26.9, c:4, r:10, hg:2.5, vg:0,   memo:"40칸"},
+  {id:"3100", n:"LS-3100", w:38.1, h:21.2, c:5, r:13, hg:2.5, vg:0,   memo:"65칸"},
+  {id:"3101", n:"LS-3101", w:38.1, h:19.2, c:5, r:12, hg:2.5, vg:3.0, memo:"60칸"},
+ ]},
+];
+const FMTMAP={}; FORMTEC.forEach(gr=>gr.list.forEach(p=>FMTMAP[p.id]=p));
+
+/* 제품 선택 목록 만들기 */
+(function buildPresetSelect(){
+  const sel=$("#fmtPreset");
+  FORMTEC.forEach(gr=>{
+    const og=document.createElement("optgroup"); og.label=gr.g;
+    gr.list.forEach(p=>{
+      const o=document.createElement("option"); o.value=p.id;
+      o.textContent=`${p.n}  ·  ${p.w}×${p.h}mm  ·  ${p.c}열×${p.r}행 (${p.c*p.r}칸)  ·  ${p.memo}`;
+      og.appendChild(o);
+    });
+    sel.appendChild(og);
+  });
+  const og2=document.createElement("optgroup"); og2.label="직접 입력";
+  const o2=document.createElement("option"); o2.value="custom"; o2.textContent="✏ 직접 입력 (가로·세로·칸수를 내가 정하기)";
+  og2.appendChild(o2); sel.appendChild(og2);
+  sel.value="3114";
+})();
+
+function applyPreset(){
+  const v=$("#fmtPreset").value, custom=(v==="custom");
+  ["#wrapW","#wrapH","#wrapC","#wrapR"].forEach(id=>$(id).style.display=custom?"flex":"none");
+  if(!custom){
+    const p=FMTMAP[v];
+    $("#fmtW").value=p.w; $("#fmtH").value=p.h; $("#fmtC").value=p.c; $("#fmtR").value=p.r;
+    $("#fmtHG").value=p.hg; $("#fmtVG").value=p.vg;
+  }
+  render();
+}
+
+/* 현재 규격 계산 */
+function currentSpec(){
+  const v=$("#fmtPreset").value, p=FMTMAP[v];
+  const w = p? p.w : Math.max(8, +$("#fmtW").value||99.1);
+  const h = p? p.h : Math.max(6, +$("#fmtH").value||67.7);
+  const c = p? p.c : Math.max(1, Math.min(12, Math.round(+$("#fmtC").value||2)));
+  const r = p? p.r : Math.max(1, Math.min(40, Math.round(+$("#fmtR").value||4)));
+  const hg=Math.max(0,+$("#fmtHG").value||0), vg=Math.max(0,+$("#fmtVG").value||0);
+  const totW=c*w+(c-1)*hg, totH=r*h+(r-1)*vg;
+  const ml=(210-totW)/2 + (+$("#fmtOX").value||0);
+  const mt=(297-totH)/2 + (+$("#fmtOY").value||0);
+  return {w,h,c,r,hg,vg,totW,totH,ml,mt,per:c*r,name:p?p.n:"직접 입력"};
+}
+
+/* 한 칸 안쪽 글자 크기 계산 (mm 단위, 넘치면 통째로 축소) */
+function labelMetrics(row,kN,kA,kE,ev,w,h){
+  const base=Math.min(w,h);
+  const pad=Math.max(0.7, base*0.09);
+  const iw=w-2*pad, ih=h-2*pad;
+  const nm=String(row[kN]||"").trim();
+  const nl=Math.max(1,[...nm].length);
+  const af=(kA&&row[kA])?String(row[kA]).trim():"";
+  const ex=(kE&&row[kE])?String(row[kE]).trim():"";
+  const evl=Math.max(1,[...ev].length);
+  const tiny  = (base<22 || iw<26);
+  const showEv= !!ev && !tiny;
+  const showWm= !tiny;
+  const showFl= !tiny && base>=26;
+  const showFrame = !tiny;
+
+  let g=base*0.035;
+  let fN=Math.min(base*0.33, iw*0.96/nl);
+  let fA=af? Math.min(base*0.105, iw*0.96/Math.max(1,[...af].length)) : 0;
+  let fE=ex? Math.min(base*0.082, iw*0.94/Math.max(1,[...ex].length)) : 0;
+  let fV=showEv? Math.min(base*0.068, iw*0.92/(evl*1.3)) : 0;
+  let fW=showWm? base*0.072 : 0;
+  let d =showFl? Math.max(0.4, base*0.03) : 0;
+  let flH=showFl? d*1.5 : 0;
+
+  let stack = fN*1.04
+    + (showEv? fV*1.35+g : 0)
+    + (showFl? flH+g*1.35 : 0)
+    + (af? fA*1.3+g*0.6 : 0)
+    + (ex? fE*1.3+g*0.35 : 0)
+    + (showWm? fW*1.4+g : 0);
+  if(stack>ih && stack>0){ const k=ih/stack; fN*=k;fA*=k;fE*=k;fV*=k;fW*=k;d*=k;flH*=k;g*=k; }
+
+  return {pad,iw,ih,base,nm,af,ex,fN,fA,fE,fV,fW,d,flH,g,showEv,showWm,showFl,showFrame};
+}
+
+const mm = v => v.toFixed(2)+"mm";
+
+/* 라벨 한 칸 HTML */
+function labelHTML(row,kN,kA,kE,ev,w,h,th){
+  const m=labelMetrics(row,kN,kA,kE,ev,w,h);
+  const fi=m.base*0.05, cs=m.base*0.055, ct=Math.max(0.13,m.base*0.007);
+  let deco="";
+  if(m.showFrame){
+    deco += `<div class="lframe" style="inset:${mm(fi)}"></div>`;
+    const cpos=[["top","left",""],["top","right","transform:scaleX(-1)"],["bottom","left","transform:scaleY(-1)"],["bottom","right","transform:scale(-1,-1)"]];
+    cpos.forEach(([a,b,tf])=>{
+      deco += `<div class="lcorner" style="${a}:${mm(fi*0.55)};${b}:${mm(fi*0.55)};width:${mm(cs)};height:${mm(cs)};${tf}">`
+           +  `<i class="h" style="height:${mm(ct)}"></i><i class="v" style="width:${mm(ct)}"></i></div>`;
+    });
+  }
+  const evHtml = m.showEv ? `<div class="lev" style="font-size:${mm(m.fV)};margin-bottom:${mm(m.g)}">${esc(ev)}</div>` : "";
+  const flHtml = m.showFl
+    ? `<div class="lfl" style="height:${mm(m.flH)};margin-top:${mm(m.g*1.35)};gap:${mm(m.d*0.7)}">`
+      +`<span class="fl" style="width:${mm(m.iw*0.15)};height:${mm(Math.max(0.14,m.base*0.007))}"></span>`
+      +`<span class="d" style="width:${mm(m.d)};height:${mm(m.d)}"></span>`
+      +`<span class="fl r" style="width:${mm(m.iw*0.15)};height:${mm(Math.max(0.14,m.base*0.007))}"></span></div>`
+    : "";
+  const afHtml = m.af ? `<p class="laf" style="font-size:${mm(m.fA)};margin-top:${mm(m.g*0.6)}">${esc(m.af)}</p>` : "";
+  const exHtml = m.ex ? `<p class="lex" style="font-size:${mm(m.fE)};margin-top:${mm(m.g*0.35)}">${esc(m.ex)}</p>` : "";
+  const wmHtml = m.showWm
+    ? (logoDataUrl
+        ? `<img src="${logoDataUrl}" alt="" style="height:${mm(m.fW*1.5)};margin-top:${mm(m.g)}">`
+        : `<span class="lwm" style="font-size:${mm(m.fW)};margin-top:${mm(m.g)}"><span class="a">meritz</span> <span class="b">fire</span></span>`)
+    : "";
+
+  return `<div class="lplate ${th}" style="padding:${mm(m.pad)}">`
+    + `<div class="lglow"></div>${deco}`
+    + `<div class="lbody">${evHtml}`
+    + `<h3 class="lname" style="font-size:${mm(m.fN)}">${esc(m.nm)}</h3>`
+    + `${flHtml}${afHtml}${exHtml}${wmHtml}</div></div>`;
+}
+
+/* 화면 미리보기 축소 배율 */
+function sheetScale(){
+  const box=$("#sheetwrap");
+  const px=(box&&box.clientWidth)||900;
+  const a4=210/25.4*96;               /* A4 가로 = 793.7px */
+  return Math.min(1, Math.max(0.25, (px-6)/a4));
+}
+
+/* 라벨 시트 렌더 */
+function renderLabels(kN,kA,kE,ev){
+  const s=currentSpec();
+  const guide=$("#cut").checked?" guide":"";
+  const th=$("#fmtPlain").checked?"plain":theme;
+  const skip=Math.max(0,(parseInt($("#fmtStart").value,10)||1)-1)%s.per;
+  const items=new Array(skip).fill(null).concat(visibleRef);
+  const n=visibleRef.length;
+  const pages=Math.max(1,Math.ceil(items.length/s.per));
+  const sc=sheetScale();
+
+  let out="";
+  for(let p=0;p<pages;p++){
+    let cells="";
+    for(let i=0;i<s.per;i++){
+      const idx=p*s.per+i, row=items[idx];
+      const col=i%s.c, rw=Math.floor(i/s.c);
+      const L=s.ml+col*(s.w+s.hg), T=s.mt+rw*(s.h+s.vg);
+      const st=`left:${L.toFixed(2)}mm;top:${T.toFixed(2)}mm;width:${s.w}mm;height:${s.h}mm`;
+      if(!row){ cells+=`<div class="lcell${guide}" style="${st}"></div>`; continue; }
+      cells+=`<div class="lcell${guide}" data-i="${idx-skip}" style="${st}">`
+           + `<button class="ldel no-print" title="이 라벨 빼기">✕</button>`
+           + labelHTML(row,kN,kA,kE,ev,s.w,s.h,th)
+           + `</div>`;
+    }
+    out+=`<div class="lsheetbox" style="width:${(210*sc).toFixed(2)}mm;height:${(297*sc).toFixed(2)}mm">`
+       + `<div class="lsheet" style="transform:scale(${sc.toFixed(4)})">`
+       + `<span class="sheetno">A4 ${p+1} / ${pages}</span>${cells}</div></div>`;
+  }
+  $("#sheets").innerHTML=out;
+
+  /* 규격 요약 */
+  const over = (s.totW>210.2)||(s.totH>297.2);
+  const mlS=((210-s.totW)/2).toFixed(2), mtS=((297-s.totH)/2).toFixed(2);
+  $("#fmtSpec").innerHTML =
+      `<b>${s.name}</b> · 한 칸 <b>${s.w} × ${s.h}mm</b> · A4 한 장 <b>${s.c}열 × ${s.r}행 = ${s.per}칸</b>`
+    + ` · 계산된 여백 좌우 <b>${mlS}mm</b> / 상하 <b>${mtS}mm</b>`
+    + (over? `<br><span class="warnfit">⚠ 칸 배치가 A4(210×297mm)를 넘습니다. 칸 수나 간격을 줄여주세요.</span>`:"")
+    + (skip? `<br>1~${skip}번 칸은 비워두고 ${skip+1}번 칸부터 인쇄합니다.`:"");
+
+  $("#countline").innerHTML =
+      `현재 <b>${n}개</b>의 라벨이 준비됐어요. 인쇄하면 A4 <b>${pages}장</b>(한 장에 ${s.per}칸).`
+    + (n?` · 마우스를 올리면 ✕로 하나씩 뺄 수 있어요`:"");
+}
+
+/* 라벨 개별 삭제 */
+$("#sheets").addEventListener("click",e=>{
+  const btn=e.target.closest(".ldel"); if(!btn)return;
+  const cell=btn.closest(".lcell"); const i=parseInt(cell.dataset.i,10);
+  if(!isNaN(i)&&visibleRef[i]){ const k=rows.indexOf(visibleRef[i]); if(k>-1)rows.splice(k,1); render(); }
+});
+
+/* 모드 전환 */
+function setMode(m){
+  mode=m;
+  const isL=(m==="label");
+  $("#fmtBox").style.display   = isL?"block":"none";
+  $("#plates").style.display   = isL?"none":"flex";
+  $("#sheetwrap").style.display= isL?"block":"none";
+  $("#pagestyle").textContent  = isL
+    ? "@media print{@page{size:A4 portrait;margin:0}}"
+    : "@media print{@page{size:A4 portrait;margin:5mm}}";
+  $("#printHint").innerHTML = isL
+    ? "아래 A4 미리보기가 그대로 인쇄됩니다. 인쇄창에서 <b>여백 '없음'</b>·<b>배율 100%</b>로 두셔야 라벨 칸에 정확히 맞아요. <b>대상을 'PDF로 저장'</b>으로 바꾸면 파일로도 받을 수 있어요."
+    : "아래 미리보기가 그대로 인쇄됩니다. A4 세로 한 장에 명패가 4개씩 채워져요. 인쇄창에서 <b>대상을 'PDF로 저장'</b>으로 바꾸면 파일로도 받을 수 있어요.";
+  $("#cutTitle").textContent = isL? "칸 경계선" : "재단선";
+  $("#cutText").textContent  = isL? "라벨 칸 선 표시(정렬 확인용)" : "자르는 선 표시";
+  $("#footNote").innerHTML = isL
+    ? "인쇄 팁 · 인쇄창에서 <b>여백 '없음'</b>, <b>배율 100%(페이지에 맞춤 끄기)</b>, <b>'배경 그래픽' 켜기</b>. 처음엔 <b>일반 A4에 시험 인쇄</b>해 라벨지에 겹쳐 확인한 뒤 미세조정 값을 넣으세요."
+    : "인쇄 팁 · 인쇄창에서 <b>여백 '없음(또는 최소)'</b>, <b>배율 100%</b>, <b>'배경 그래픽' 켜기</b>로 두면 색과 명암이 제대로 나옵니다. 규격 150×70mm, A4 세로 한 장당 4개.";
+  render();
+}
+$("#modeSeg").addEventListener("click",e=>{
+  const b=e.target.closest("button"); if(!b)return;
+  [...$("#modeSeg").children].forEach(x=>x.classList.toggle("on",x===b));
+  setMode(b.dataset.m);
+});
+
+/* 폼텍 옵션 입력 연결 */
+$("#fmtPreset").addEventListener("change",applyPreset);
+["#fmtW","#fmtH","#fmtC","#fmtR","#fmtHG","#fmtVG","#fmtOX","#fmtOY","#fmtStart"].forEach(id=>{
+  $(id).addEventListener("input",()=>{ if(mode==="label")render(); });
+});
+$("#fmtPlain").addEventListener("change",()=>{ if(mode==="label")render(); });
+
+/* 창 크기 변경 시 미리보기 배율 갱신 */
+let rsz=null;
+window.addEventListener("resize",()=>{ if(mode!=="label")return; clearTimeout(rsz); rsz=setTimeout(render,180); });
 
 /* 열자마자 예시 데이터로 미리보기 */
 function loadSample(){
@@ -419,7 +804,8 @@ function loadSample(){
   $("#printPanel").style.display="block";
   $("#empty").style.display="none";
   $("#demoNote").style.display="flex";
-  render();
+  applyPreset();
+  setMode("plate");
 }
 loadSample();
 </script>
