@@ -113,12 +113,13 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   .countline{margin:16px 0 2px 30px;font-size:13px;font-weight:600}
   .countline b{color:var(--meritz)}
 
+  .previewwrap{width:100%;overflow-x:auto;overflow-y:visible}
   .plates{display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-start;gap:22px;margin-top:10px}
-  .page{display:flex}
+  .page{display:flex;flex:0 0 150mm;width:150mm;height:70mm}
 
   /* ============ 명패 150mm x 70mm ============ */
   .plate{
-    position:relative;width:150mm;height:70mm;flex:none;max-width:100%;overflow:hidden;border-radius:10px;
+    position:relative;width:150mm;height:70mm;flex:0 0 150mm;overflow:hidden;border-radius:10px;
     container-type:inline-size;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:5.4cqw 8.5cqw 4.8cqw;isolation:isolate;
   }
   .plate.light{background:linear-gradient(150deg,#ffffff 0%,#fbf7f0 46%,#f1e8d7 100%);color:var(--ink);box-shadow:0 8px 26px rgba(20,18,13,.11)}
@@ -169,6 +170,12 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   .plate.light .wordmark .wm .b{color:#2a2019}
   .plate.dark  .wordmark .wm .b{color:#efe8de}
   .plate .wordmark img{height:4.8cqw;width:auto;object-fit:contain}
+  /* 출력 환경에서도 모든 명패의 디자인 토큰을 동일하게 유지 */
+  .plate,.plate *,.lplate,.lplate *{
+    -webkit-print-color-adjust:exact;
+    print-color-adjust:exact;
+  }
+
 
   .plate .del{position:absolute;top:6px;right:6px;z-index:5;width:24px;height:24px;border-radius:50%;border:0;background:rgba(20,18,13,.55);color:#fff;font-size:13px;line-height:1;cursor:pointer;display:none}
   .page:hover .del{display:block}
@@ -258,11 +265,73 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
 
   @media print{
     @page{size:A4 portrait;margin:5mm}
+
+    /* 화면 미리보기와 인쇄/PDF의 색상·그라디언트·장식 보존 */
+    html,body,.chrome,.previewwrap,.plates,.page,.plate,.plate *,
+    .sheetwrap,.lsheetbox,.lsheet,.lcell,.lplate,.lplate *{
+      -webkit-print-color-adjust:exact !important;
+      print-color-adjust:exact !important;
+    }
+
     .chrome{padding:0;max-width:none}
     .no-print{display:none !important}
     .plates{display:block;gap:0;margin:0}
-    .page{width:150mm;height:70mm;margin:0 auto 1.5mm;display:flex;align-items:center;justify-content:center;page-break-inside:avoid;break-inside:avoid}
-    .plate{width:150mm;height:70mm;border-radius:0;box-shadow:none !important;outline:var(--cutborder)}
+    .page{width:150mm;height:70mm;margin:0 auto;display:flex;align-items:center;justify-content:center;page-break-inside:avoid;break-inside:avoid}
+    /* A4 한 장에 4개씩, 명패 사이 간격 없이 밀착 배치 */
+    .page:nth-child(4n){page-break-after:always;break-after:page}
+    .page:last-child{page-break-after:auto;break-after:auto}
+
+    /* 명패 디자인은 화면과 동일하게 유지: 배경/그라디언트/프레임/장식 포함 */
+    .plate{
+      width:150mm;height:70mm;
+      border-radius:10px;
+      box-shadow:0 8px 26px rgba(20,18,13,.11) !important;
+      outline:var(--cutborder);
+      overflow:hidden;
+      isolation:isolate;
+    }
+    .plate.light{
+      background:linear-gradient(150deg,#ffffff 0%,#fbf7f0 46%,#f1e8d7 100%) !important;
+    }
+    .plate.dark{
+      background:radial-gradient(135% 165% at 50% -5%,#37302a 0%,#1c1712 55%,#110e0b 100%) !important;
+    }
+    .plate .glow,
+    .plate .mono,
+    .plate .frame,
+    .plate .corner,
+    .plate .eyebrow,
+    .plate .center,
+    .plate .wordmark{
+      -webkit-print-color-adjust:exact !important;
+      print-color-adjust:exact !important;
+    }
+
+    /* 인쇄/PDF용 M 음각: 브라우저의 페이지별 텍스트 컴포지팅 편차를 피하기 위해
+       CSS 텍스트 대신 모든 명패에 동일한 SVG 벡터를 배경으로 고정합니다. */
+    .plate .mono{
+      right:-5mm !important;
+      bottom:-12mm !important;
+      width:48mm !important;
+      height:58mm !important;
+      z-index:0 !important;
+      display:block !important;
+      opacity:1 !important;
+      font-size:0 !important;
+      line-height:0 !important;
+      background-repeat:no-repeat !important;
+      background-position:center bottom !important;
+      background-size:100% 100% !important;
+      color:transparent !important;
+      -webkit-print-color-adjust:exact !important;
+      print-color-adjust:exact !important;
+    }
+    .plate.light .mono{
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 120'%3E%3Ctext x='50' y='100' text-anchor='middle' font-family='Georgia,serif' font-size='108' font-weight='900' fill='%23F5451E' fill-opacity='.055'%3EM%3C/text%3E%3C/svg%3E") !important;
+    }
+    .plate.dark .mono{
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 120'%3E%3Ctext x='50' y='100' text-anchor='middle' font-family='Georgia,serif' font-size='108' font-weight='900' fill='%23FFFFFF' fill-opacity='.05'%3EM%3C/text%3E%3C/svg%3E") !important;
+    }
     .plate .del{display:none !important}
 
     /* 폼텍 라벨 모드 인쇄 */
@@ -272,7 +341,10 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     .lsheet{transform:none !important;box-shadow:none !important;width:210mm;height:296.9mm;margin:0}
     .lsheet .sheetno{display:none !important}
     .lcell .ldel{display:none !important}
-    .lplate{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .lplate{
+      -webkit-print-color-adjust:exact !important;
+      print-color-adjust:exact !important;
+    }
   }
 </style>
 <style id="pagestyle"></style>
@@ -424,7 +496,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     <div class="sheetwrap" id="sheetwrap" style="display:none"><div id="sheets"></div></div>
   </div>
 
-  <p class="footer-note no-print" id="footNote">인쇄 팁 · 인쇄창에서 <b>여백 '없음(또는 최소)'</b>, <b>배율 100%</b>, <b>'배경 그래픽' 켜기</b>로 두면 색과 명암이 제대로 나옵니다. 규격 150×70mm, A4 세로 한 장당 4개.</p>
+  <p class="footer-note no-print" id="footNote">인쇄 팁 · 인쇄창에서 <b>여백 '없음(또는 최소)'</b>, <b>배율 100%</b>, <b>'배경 그래픽' 켜기</b>로 두면 색과 명암이 제대로 나옵니다. 규격 150×70mm, A4 세로 한 장당 4개이며 명패 사이를 밀착 배치합니다.</p>
 </div>
 
 <script>
@@ -529,8 +601,8 @@ function render(){
   }else{
     $("#sheets").innerHTML="";
     $("#plates").innerHTML=visibleRef.map(r=>plateHTML(r,kN,kA,kE,eyebrow)).join("");
-    const pages=Math.ceil(n/3);
-    $("#countline").innerHTML=`현재 <b>${n}개</b>의 명패가 준비됐어요. 인쇄하면 A4 <b>${pages}장</b>(한 장에 최대 3개).`+(n?` · 마우스를 올리면 ✕로 하나씩 뺄 수 있어요`:"");
+    const pages=Math.ceil(n/4);
+    $("#countline").innerHTML=`현재 <b>${n}개</b>의 명패가 준비됐어요. 인쇄하면 A4 <b>${pages}장</b>(한 장에 최대 4개).`+(n?` · 마우스를 올리면 ✕로 하나씩 뺄 수 있어요`:"");
   }
   $("#empty").style.display=n?"none":"block";
   if(n===0)$("#empty").textContent="이름이 비어 있어 표시할 명패가 없어요. 항목 연결에서 '이름'을 확인해주세요.";
@@ -763,8 +835,8 @@ function setMode(m){
   $("#plates").style.display   = isL?"none":"flex";
   $("#sheetwrap").style.display= isL?"block":"none";
   $("#pagestyle").textContent  = isL
-    ? "@media print{@page{size:A4 portrait;margin:0}}"
-    : "@media print{@page{size:A4 portrait;margin:5mm}}";
+    ? "@media print{@page{size:A4 portrait;margin:0}*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}}"
+    : "@media print{@page{size:A4 portrait;margin:5mm}*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}}";
   $("#printHint").innerHTML = isL
     ? "아래 A4 미리보기가 그대로 인쇄됩니다. 인쇄창에서 <b>여백 '없음'</b>·<b>배율 100%</b>로 두셔야 라벨 칸에 정확히 맞아요. <b>대상을 'PDF로 저장'</b>으로 바꾸면 파일로도 받을 수 있어요."
     : "아래 미리보기가 그대로 인쇄됩니다. A4 세로 한 장에 명패가 4개씩 채워져요. 인쇄창에서 <b>대상을 'PDF로 저장'</b>으로 바꾸면 파일로도 받을 수 있어요.";
@@ -772,7 +844,7 @@ function setMode(m){
   $("#cutText").textContent  = isL? "라벨 칸 선 표시(정렬 확인용)" : "자르는 선 표시";
   $("#footNote").innerHTML = isL
     ? "인쇄 팁 · 인쇄창에서 <b>여백 '없음'</b>, <b>배율 100%(페이지에 맞춤 끄기)</b>, <b>'배경 그래픽' 켜기</b>. 처음엔 <b>일반 A4에 시험 인쇄</b>해 라벨지에 겹쳐 확인한 뒤 미세조정 값을 넣으세요."
-    : "인쇄 팁 · 인쇄창에서 <b>여백 '없음(또는 최소)'</b>, <b>배율 100%</b>, <b>'배경 그래픽' 켜기</b>로 두면 색과 명암이 제대로 나옵니다. 규격 150×70mm, A4 세로 한 장당 4개.";
+    : "인쇄 팁 · 인쇄창에서 <b>여백 '없음(또는 최소)'</b>, <b>배율 100%</b>, <b>'배경 그래픽' 켜기</b>로 두면 색과 명암이 제대로 나옵니다. 규격 150×70mm, A4 세로 한 장당 4개이며 명패 사이를 밀착 배치합니다.";
   render();
 }
 $("#modeSeg").addEventListener("click",e=>{
